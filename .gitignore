@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Dataset (Too large for GitHub standard)
+dataset/
+*.zip
+
+# Training Runs (Models & Logs)
+runs/
+*.pt
+!best.pt
+
+# IDE
+.vscode/
+.idea/
+
+# System
+Thumbs.db
+Desktop.ini

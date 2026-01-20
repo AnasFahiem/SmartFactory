@@ -7,7 +7,7 @@ echo ==========================================
 
 echo Starting Backend Server...
 cd backend
-start /b python app.py > ..\backend_log.txt 2>&1
+start /b py -3.14 app.py > ..\backend_log.txt 2>&1
 cd ..
 
 echo Starting Frontend Application...

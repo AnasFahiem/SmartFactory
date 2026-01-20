@@ -21,3 +21,13 @@ runs/
 # System
 Thumbs.db
 Desktop.ini
+
+# Logs
+*_log.txt
+*.log
+
+# Frontend
+node_modules/
+.angular/
+dist/
+.vscode/

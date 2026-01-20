@@ -1,0 +1,45 @@
+<div class="camera-control-container">
+    <h2>Live Camera Stream</h2>
+
+    <div class="video-wrapper">
+        <div *ngIf="isRunning; else stoppedState" class="video-box">
+            <img src="http://localhost:5000/video_feed" alt="Live Stream" class="live-feed">
+        </div>
+        <ng-template #stoppedState>
+            <div class="stopped-box">
+                <p>Stream Paused</p>
+                <button (click)="toggleCamera()" class="btn btn-primary">Resume Stream</button>
+            </div>
+        </ng-template>
+    </div>
+
+    <div class="controls-panel">
+        <div class="control-group">
+            <label>Stream Status:</label>
+            <button [class.btn-danger]="isRunning" [class.btn-success]="!isRunning" (click)="toggleCamera()"
+                class="btn">
+                {{ isRunning ? 'Stop Stream' : 'Start Stream' }}
+            </button>
+        </div>
+
+        <div class="control-group">
+            <label>Camera Source:</label>
+            <select [(ngModel)]="selectedSource" class="form-control">
+                <option *ngFor="let src of sources" [value]="src.value">{{ src.label }}</option>
+            </select>
+        </div>
+
+        <div class="control-group" *ngIf="selectedSource === 'custom'">
+            <label>Stream URL (ESP32 IP):</label>
+            <input type="text" [(ngModel)]="customIp" placeholder="http://192.168.1.X:81/stream" class="form-control">
+        </div>
+
+        <div class="control-group">
+            <button (click)="applyConfig()" class="btn btn-warning">Apply Configuration</button>
+        </div>
+
+        <div *ngIf="message" class="alert-info">
+            {{ message }}
+        </div>
+    </div>
+</div>

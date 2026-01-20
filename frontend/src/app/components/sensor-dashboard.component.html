@@ -1,0 +1,85 @@
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="logo-section">
+            <div class="logo-icon">🏭</div>
+            <div>
+                <h1>Factory IoT Monitor</h1>
+                <p class="subtitle">Real-time Sensor Dashboard & Analytics</p>
+            </div>
+        </div>
+    </header>
+
+
+
+    <div class="sensors-grid">
+        <!-- Vision Sensors -->
+        <div class="sensor-card temperature">
+            <div class="sensor-icon">👷</div>
+            <div class="sensor-label">Personnel Detected</div>
+            <div class="sensor-value">{{ sensorService.totalPeople }}</div>
+            <div class="sensor-status normal">
+                {{ sensorService.totalPeople > 0 ? 'Active' : 'Empty' }}
+            </div>
+        </div>
+
+        <div class="sensor-card smoke">
+            <div class="sensor-icon">⚠️</div>
+            <div class="sensor-label">PPE Violations</div>
+            <div class="sensor-value" [ngClass]="sensorService.violations > 0 ? 'alert' : 'safe'">
+                {{ sensorService.violations }}
+            </div>
+            <div class="sensor-status" [ngClass]="sensorService.violations > 0 ? 'danger' : 'safe'">
+                {{ sensorService.violations > 0 ? '🚨 Violation!' : '✅ Safe' }}
+            </div>
+        </div>
+
+        <!-- Environmental Sensors (Original) -->
+        <div class="sensor-card temperature">
+            <div class="sensor-icon">🌡️</div>
+            <div class="sensor-label">Temperature</div>
+            <div class="sensor-value">{{ sensorService.temperature }}°C</div>
+            <div class="sensor-status" [ngClass]="sensorService.temperature > 50 ? 'warning' : 'normal'">
+                {{ sensorService.temperature > 50 ? '⚠️ High' : '✅ Normal' }}
+            </div>
+        </div>
+
+        <div class="sensor-card smoke">
+            <div class="sensor-icon">💨</div>
+            <div class="sensor-label">Smoke Detector</div>
+            <div class="sensor-value" [ngClass]="sensorService.smoke ? 'alert' : 'safe'">
+                {{ sensorService.smoke ? 'ALERT' : 'CLEAR' }}
+            </div>
+            <div class="sensor-status" [ngClass]="sensorService.smoke ? 'danger' : 'safe'">
+                {{ sensorService.smoke ? '🚨 Detected' : '✅ Safe' }}
+            </div>
+        </div>
+
+        <div class="sensor-card weight">
+            <div class="sensor-icon">⚖️</div>
+            <div class="sensor-label">Weight</div>
+            <div class="sensor-value">{{ sensorService.weight }} kg</div>
+            <div class="sensor-status normal">
+                {{ sensorService.weight > 0 ? '📦 Detected' : '⏳ Waiting' }}
+            </div>
+        </div>
+
+        <div class="sensor-card product">
+            <div class="sensor-icon">📌</div>
+            <div class="sensor-label">Product Number</div>
+            <div class="sensor-value product-text">{{ sensorService.productNumber || '---' }}</div>
+            <div class="sensor-status normal">
+                {{ sensorService.productNumber ? '✅ Registered' : '⏳ Pending' }}
+            </div>
+        </div>
+    </div>
+
+    <footer class="dashboard-footer">
+        <p>Live Connection Status:
+            <span class="status-indicator"
+                [ngClass]="sensorService.connectionStatus === 'Connected' ? 'connected' : 'disconnected'">
+                ● {{ sensorService.connectionStatus }}
+            </span>
+        </p>
+        <p class="timestamp">Last Update: {{ lastUpdate | date:'short' }}</p>
+    </footer>
+</div>

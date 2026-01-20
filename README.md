@@ -30,7 +30,7 @@ A comprehensive Real-time Industrial Surveillance and Safety Monitoring System u
         ```
     *   **Frontend**:
         ```bash
-        cd IoT-smart-factory/IoTFrontend
+        cd frontend
         npm install
         ```
 
@@ -59,7 +59,7 @@ python app.py
 
 **Frontend**:
 ```bash
-cd IoT-smart-factory/IoTFrontend
+cd frontend
 npm start
 ```
 

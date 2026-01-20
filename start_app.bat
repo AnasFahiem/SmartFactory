@@ -11,9 +11,9 @@ start /b python app.py > ..\backend_log.txt 2>&1
 cd ..
 
 echo Starting Frontend Application...
-cd IoT-smart-factory\IoTFrontend
-start /b npm start > ..\..\frontend_log.txt 2>&1
-cd ..\..
+cd frontend
+start /b npm start > ..\frontend_log.txt 2>&1
+cd ..
 
 echo Waiting for servers to initialize (15s)...
 timeout /t 15

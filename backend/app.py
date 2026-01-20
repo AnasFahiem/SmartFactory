@@ -22,21 +22,35 @@ detector = PPE_Detector()
 def gen_frames():
     """Generator function for video streaming."""
     global current_stats
+    print("Starting video stream loop...")
+    frame_count = 0
     while True:
-        frame = camera.get_frame()
-        
-        # Run Detection
-        annotated_frame, stats = detector.detect(frame)
-        
-        # Update global stats
-        current_stats = stats
-        
-        # Encode to JPEG
-        frame_bytes = camera.get_jpg_bytes(annotated_frame)
-        
-        # Yield frame in MJPEG format
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        try:
+            frame = camera.get_frame()
+            if frame is None:
+                print("Error: Camera returned None frame.")
+                continue
+
+            # Run Detection
+            annotated_frame, stats = detector.detect(frame)
+            
+            # Update global stats
+            current_stats = stats
+            
+            # Encode to JPEG
+            frame_bytes = camera.get_jpg_bytes(annotated_frame)
+            
+            # Yield frame in MJPEG format
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                   
+            frame_count += 1
+            if frame_count % 30 == 0:
+                print(f"Stream is alive! Processed {frame_count} frames.")
+                
+        except Exception as e:
+            print(f"CRITICAL ERROR in gen_frames: {e}")
+            time.sleep(1) # Prevent spamming loop on error
 
 @app.route('/')
 def index():
@@ -52,4 +66,4 @@ def api_status():
 
 if __name__ == '__main__':
     # Threaded=True is important for streaming multiple clients (if needed)
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True, use_reloader=False)

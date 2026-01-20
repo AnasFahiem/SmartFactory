@@ -1,6 +1,6 @@
 # Smart Factory IoT Monitor 🏭
 
-A comprehensive Real-time Industrial Surveillance and Safety Monitoring System using **YOLOv8** (Backend) and **Angular** (Frontend).
+A comprehensive Real-time Industrial Surveillance and Safety Monitoring System using **YOLOv11** (Backend) and **Angular** (Frontend).
 
 ## Features 🚀
 - **Real-time PPE Detection**: Detects Hardhats, Vests, Gloves, Masks, etc.

@@ -36,3 +36,36 @@ info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
 info: IoTBackend.Services.MqttService[0]
       Saved weight 22 to database
+info: IoTBackend.Services.MqttService[0]
+      MQTT message received - Topic: factory/weight, Payload: {
+  "productNumber": "PN-00223",
+  "weight": 16.54,
+  "temperature": 24.6,
+  "smoke": true
+}
+fail: IoTBackend.Services.MqttService[0]
+      Error processing MQTT message: The given key was not present in the dictionary.
+info: IoTBackend.Services.MqttService[0]
+      MQTT message received - Topic: factory/measurement, Payload: {
+  "productNumber": "PN-00223",
+  "weight": 16.54,
+  "temperature": 24.6,
+  "smoke": true
+}
+info: IoTBackend.Services.MqttService[0]
+      Temperature: 24.6
+info: IoTBackend.Services.MqttService[0]
+      Smoke: True
+info: IoTBackend.Services.MqttService[0]
+      Weight: 16.54
+info: IoTBackend.Services.MqttService[0]
+      Product: PN-00223
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (25ms) [Parameters=[@p0='?' (Size = 4000), @p1='?' (DbType = Decimal)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO `Products` (`ProductNumber`, `Weight`)
+      VALUES (@p0, @p1);
+      SELECT `Id`
+      FROM `Products`
+      WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+info: IoTBackend.Services.MqttService[0]
+      Saved to database - Product: PN-00223, Weight: 16.54

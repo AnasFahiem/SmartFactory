@@ -1,31 +1,40 @@
 
 > IoTFrontend@1.0.0 start
-> ng serve
+> npx ng serve --host 0.0.0.0
 
+
+Warning: This is a simple server for use in testing or debugging Angular applications
+locally. It hasn't been reviewed for security issues.
+
+Binding this server to an open connection can result in compromising your application or
+computer. Using a different host than the one passed to the "--host" flag might result in
+websocket connection issues. You might need to use "--disable-host-check" if that's the
+case.
+    
 - Generating browser application bundles (phase: setup)...
-✔ Browser application bundle generation complete.
+√ Browser application bundle generation complete.
 
 Initial chunk files   | Names         |  Raw size
-vendor.js             | vendor        |   2.97 MB | 
+vendor.js             | vendor        |   2.81 MB | 
 polyfills.js          | polyfills     | 262.57 kB | 
 styles.css, styles.js | styles        | 149.94 kB | 
-main.js               | main          |  64.74 kB | 
+main.js               | main          |  63.08 kB | 
 runtime.js            | runtime       |   6.50 kB | 
 
-                      | Initial total |   3.44 MB
+                      | Initial total |   3.28 MB
 
-Build at: 2026-01-20T22:58:17.809Z - Hash: 28f80221888a17a9 - Time: 13429ms
+Build at: 2026-01-21T18:34:23.882Z - Hash: e6ec5a5fc2bc1723 - Time: 6078ms
 
-** Angular Live Development Server is listening on localhost:4200, open your browser on http://localhost:4200/ **
+** Angular Live Development Server is listening on 0.0.0.0:4200, open your browser on http://localhost:4200/ **
 
 
 √ Compiled successfully.
-✔ Browser application bundle generation complete.
+√ Browser application bundle generation complete.
 
 
 
 5 unchanged chunks
 
-Build at: 2026-01-20T22:58:23.046Z - Hash: 28f80221888a17a9 - Time: 5114ms
+Build at: 2026-01-21T18:34:24.342Z - Hash: e6ec5a5fc2bc1723 - Time: 368ms
 
 √ Compiled successfully.

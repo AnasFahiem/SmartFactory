@@ -1,4 +1,7 @@
-Traceback (most recent call last):
-  File "F:\SmartFactory-master\backend\app.py", line 9, in <module>
-    from flask_cors import CORS
-ModuleNotFoundError: No module named 'flask_cors'
+[Camera] Connecting to source: 0
+[Camera] Connected to 0
+Loading YOLO model from best.pt...
+Model loaded successfully.
+Classes: {0: 'Hardhat', 1: 'NO-Hardhat', 2: 'NO-Safety Vest', 3: 'Person', 4: 'Safety Vest', 5: 'Safety Gloves', 6: 'Safety Boot', 7: 'Safety Glasses', 8: 'Mask'}
+ * Serving Flask app 'app'
+ * Debug mode: on

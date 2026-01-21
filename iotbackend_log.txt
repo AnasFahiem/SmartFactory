@@ -1,11 +1,11 @@
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (87ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-      SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='IotDb' AND TABLE_NAME='__EFMigrationsHistory';
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      Executed DbCommand (504ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
       SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='IotDb' AND TABLE_NAME='__EFMigrationsHistory';
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
       Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='IotDb' AND TABLE_NAME='__EFMigrationsHistory';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
       SELECT `MigrationId`, `ProductVersion`
       FROM `__EFMigrationsHistory`
       ORDER BY `MigrationId`;
@@ -21,5 +21,3 @@ info: Microsoft.Hosting.Lifetime[0]
       Content root path: F:\SmartFactory-master\IoTBackend
 info: IoTBackend.Services.MqttService[0]
       MQTT subscribed to factory topics
-warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
-      Failed to determine the https port for redirect.

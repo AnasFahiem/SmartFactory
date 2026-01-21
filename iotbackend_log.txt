@@ -1,11 +1,11 @@
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (504ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      Executed DbCommand (1,904ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
       SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='IotDb' AND TABLE_NAME='__EFMigrationsHistory';
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      Executed DbCommand (23ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
       SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='IotDb' AND TABLE_NAME='__EFMigrationsHistory';
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      Executed DbCommand (167ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
       SELECT `MigrationId`, `ProductVersion`
       FROM `__EFMigrationsHistory`
       ORDER BY `MigrationId`;
@@ -19,5 +19,20 @@ info: Microsoft.Hosting.Lifetime[0]
       Hosting environment: Production
 info: Microsoft.Hosting.Lifetime[0]
       Content root path: F:\SmartFactory-master\IoTBackend
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
 info: IoTBackend.Services.MqttService[0]
       MQTT subscribed to factory topics
+info: IoTBackend.Services.MqttService[0]
+      MQTT message received - Topic: factory/weight, Payload: {
+ "value":22
+}
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (328ms) [Parameters=[@p0='?' (Size = 4000), @p1='?' (DbType = Decimal)], CommandType='Text', CommandTimeout='30']
+      INSERT INTO `Products` (`ProductNumber`, `Weight`)
+      VALUES (@p0, @p1);
+      SELECT `Id`
+      FROM `Products`
+      WHERE ROW_COUNT() = 1 AND `Id` = LAST_INSERT_ID();
+info: IoTBackend.Services.MqttService[0]
+      Saved weight 22 to database

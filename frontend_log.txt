@@ -12,117 +12,20 @@ websocket connection issues. You might need to use "--disable-host-check" if tha
 case.
     
 - Generating browser application bundles (phase: setup)...
-√ Browser application bundle generation complete.
+✔ Browser application bundle generation complete.
 
 Initial chunk files   | Names         |  Raw size
-vendor.js             | vendor        |   2.81 MB | 
+vendor.js             | vendor        |   2.97 MB | 
 polyfills.js          | polyfills     | 262.57 kB | 
 styles.css, styles.js | styles        | 149.94 kB | 
-main.js               | main          |  63.08 kB | 
+main.js               | main          |  72.28 kB | 
 runtime.js            | runtime       |   6.50 kB | 
 
-                      | Initial total |   3.28 MB
+                      | Initial total |   3.45 MB
 
-Build at: 2026-01-21T18:34:23.882Z - Hash: e6ec5a5fc2bc1723 - Time: 6078ms
+Build at: 2026-01-21T19:25:35.645Z - Hash: 2df2f5ea9726cc69 - Time: 41382ms
 
 ** Angular Live Development Server is listening on 0.0.0.0:4200, open your browser on http://localhost:4200/ **
 
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-
-
-5 unchanged chunks
-
-Build at: 2026-01-21T18:34:24.342Z - Hash: e6ec5a5fc2bc1723 - Time: 368ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 65.00 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:43:19.238Z - Hash: dce54af17f60696c - Time: 22660ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 62.68 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:43:37.959Z - Hash: 3ab11999d7799907 - Time: 10584ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 62.64 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:45:52.296Z - Hash: 5e70f25fec8e373b - Time: 898ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 62.64 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:45:53.018Z - Hash: 650779cbd0df0714 - Time: 643ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 60.71 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:48:10.201Z - Hash: 1f2039224e106452 - Time: 635ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 60.71 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:48:25.142Z - Hash: a4dc3dcd92dc9fc6 - Time: 361ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 63.08 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:48:34.205Z - Hash: 2eeaed331320289e - Time: 471ms
-
-√ Compiled successfully.
-√ Browser application bundle generation complete.
-
-Initial chunk files | Names   | Raw size
-main.js             | main    | 63.08 kB | 
-runtime.js          | runtime |  6.50 kB | 
-
-3 unchanged chunks
-
-Build at: 2026-01-21T18:48:47.835Z - Hash: 67c9d4430f283bca - Time: 300ms
 
 √ Compiled successfully.

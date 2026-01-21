@@ -1,7 +1,9 @@
+
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, interval } from 'rxjs';
 import { switchMap, retry } from 'rxjs/operators';
+import * as signalR from '@microsoft/signalr';
 
 interface BackendStats {
     total_people: number;
@@ -13,6 +15,8 @@ interface BackendStats {
 })
 export class SensorService {
     private apiUrl = 'http://localhost:5000/api/status';
+    private hubUrl = 'http://localhost:5005/hubs/factory';
+    private hubConnection: signalR.HubConnection | null = null;
 
     totalPeople: number = 0;
     violations: number = 0;
@@ -29,26 +33,60 @@ export class SensorService {
     constructor(private http: HttpClient) { }
 
     start(): void {
-        this.connectionStatus = 'Polling';
-
-        // Poll every 1 second
+        this.startHubConnection();
+        // Optionally keep polling Flask backend for totalPeople/violations
         interval(1000).pipe(
             switchMap(() => this.http.get<BackendStats>(this.apiUrl)),
-            retry(3) // Retry failed requests
+            retry(3)
         ).subscribe({
             next: (stats) => {
-                this.connectionStatus = 'Connected';
                 this.totalPeople = stats.total_people;
                 this.violations = stats.violations;
-
-                // Map to existing dummy fields for visualization if desired
-                // or just leave them as defaults.
-                this.smoke = this.violations > 0; // Turn on smoke alarm if violations exist?
             },
             error: (err) => {
-                this.connectionStatus = 'Error';
+                // Only log error, don't set connectionStatus here
                 console.error('Polling error:', err);
             }
+        });
+    }
+
+    private startHubConnection(): void {
+        this.connectionStatus = 'Connecting';
+        this.hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl(this.hubUrl)
+            .withAutomaticReconnect()
+            .build();
+
+        this.hubConnection.on('ReceiveTemperatureUpdate', (temperature: number) => {
+            this.temperature = temperature;
+        });
+        this.hubConnection.on('ReceiveSmokeUpdate', (smoke: boolean) => {
+            this.smoke = smoke;
+        });
+        this.hubConnection.on('ReceiveWeightUpdate', (weight: number) => {
+            this.weight = weight;
+        });
+        this.hubConnection.on('ReceiveProductNumberUpdate', (productNumber: string) => {
+            this.productNumber = productNumber;
+        });
+
+        this.hubConnection.start()
+            .then(() => {
+                this.connectionStatus = 'Connected';
+            })
+            .catch(err => {
+                this.connectionStatus = 'Error';
+                console.error('SignalR connection error:', err);
+            });
+
+        this.hubConnection.onreconnecting(() => {
+            this.connectionStatus = 'Reconnecting';
+        });
+        this.hubConnection.onreconnected(() => {
+            this.connectionStatus = 'Connected';
+        });
+        this.hubConnection.onclose(() => {
+            this.connectionStatus = 'Disconnected';
         });
     }
     setCameraSource(source: any): Observable<any> {

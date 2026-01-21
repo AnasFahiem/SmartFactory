@@ -1,0 +1,44 @@
+
+> IoTFrontend@1.0.0 start
+> ng serve
+
+? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) [46D[46C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) v[47D[47C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) ve[48D[48C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) ven[49D[49C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv[50D[50C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\[51D[51C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\S[52D[52C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Sc[53D[53C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scr[54D[54C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scri[55D[55C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scrip[56D[56C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Script[57D[57C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts[58D[58C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\[59D[59C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\p[60D[60C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pi[61D[61C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip[62D[62C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip [63D[63C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip i[64D[64C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip in[65D[65C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip ins[66D[66C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip inst[67D[67C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip insta[68D[68C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip instal[69D[69C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install[70D[70C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install [71D[71C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install f[72D[72C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install fl[73D[73C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install fla[74D[74C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install flas[75D[75C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install flask[76D[76C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install flask-[77D[77C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install flask-c[78D[78C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install flask-co[79D[79C[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install flask-cor
+[1A[0D[80C[1B[2K[1A[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? (Y/n) venv\Scripts\pip install 
+flask-cors[1A[10D[81C[1B[2K[1A[2K[1A[2K[G? Port 4200 is already in use.
+Would you like to use a different port? Yes[43D[43C

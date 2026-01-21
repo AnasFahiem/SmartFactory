@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "F:\SmartFactory-master\backend\app.py", line 9, in <module>
+    from flask_cors import CORS
+ModuleNotFoundError: No module named 'flask_cors'

@@ -28,11 +28,6 @@ def gen_frames():
     frame_count = 0
     while True:
         try:
-            # If camera is stopped, pause the loop to avoid burning CPU and sending frames
-            if not camera.is_running:
-                time.sleep(0.3)
-                continue
-
             frame = camera.get_frame()
             if frame is None:
                 print("Error: Camera returned None frame.")

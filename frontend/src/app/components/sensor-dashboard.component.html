@@ -9,77 +9,106 @@
         </div>
     </header>
 
+    <!-- Vision & Safety Section -->
+    <section class="sensor-section">
+        <div class="section-header">
+            <h2>👁️ Vision & Safety Monitoring</h2>
+            <p>AI-powered personnel and PPE detection</p>
+        </div>
+        <div class="sensors-grid two-column">
+            <div class="sensor-card personnel">
+                <div class="sensor-icon">👷</div>
+                <div class="sensor-label">Personnel Detected</div>
+                <div class="sensor-value">{{ sensorService.totalPeople }}</div>
+                <div class="sensor-status normal">
+                    {{ sensorService.totalPeople > 0 ? 'Active' : 'Empty' }}
+                </div>
+            </div>
 
-
-    <div class="sensors-grid">
-        <!-- Vision Sensors -->
-        <div class="sensor-card temperature">
-            <div class="sensor-icon">👷</div>
-            <div class="sensor-label">Personnel Detected</div>
-            <div class="sensor-value">{{ sensorService.totalPeople }}</div>
-            <div class="sensor-status normal">
-                {{ sensorService.totalPeople > 0 ? 'Active' : 'Empty' }}
+            <div class="sensor-card ppe">
+                <div class="sensor-icon">⚠️</div>
+                <div class="sensor-label">PPE Violations</div>
+                <div class="sensor-value" [ngClass]="sensorService.violations > 0 ? 'alert' : 'safe'">
+                    {{ sensorService.violations }}
+                </div>
+                <div class="sensor-status" [ngClass]="sensorService.violations > 0 ? 'danger' : 'safe'">
+                    {{ sensorService.violations > 0 ? '🚨 Violation!' : '✅ Safe' }}
+                </div>
             </div>
         </div>
+    </section>
 
-        <div class="sensor-card smoke">
-            <div class="sensor-icon">⚠️</div>
-            <div class="sensor-label">PPE Violations</div>
-            <div class="sensor-value" [ngClass]="sensorService.violations > 0 ? 'alert' : 'safe'">
-                {{ sensorService.violations }}
+    <!-- Environmental Monitoring Section -->
+    <section class="sensor-section">
+        <div class="section-header">
+            <h2>🌡️ Environmental Monitoring</h2>
+            <p>Temperature and air quality sensors</p>
+        </div>
+        <div class="sensors-grid two-column">
+            <div class="sensor-card temperature">
+                <div class="sensor-icon">🌡️</div>
+                <div class="sensor-label">Temperature</div>
+                <div class="sensor-value">{{ sensorService.temperature }}°C</div>
+                <div class="sensor-status" [ngClass]="sensorService.temperature > 50 ? 'warning' : 'normal'">
+                    {{ sensorService.temperature > 50 ? '⚠️ High' : '✅ Normal' }}
+                </div>
             </div>
-            <div class="sensor-status" [ngClass]="sensorService.violations > 0 ? 'danger' : 'safe'">
-                {{ sensorService.violations > 0 ? '🚨 Violation!' : '✅ Safe' }}
+
+            <div class="sensor-card smoke">
+                <div class="sensor-icon">💨</div>
+                <div class="sensor-label">Smoke Detector</div>
+                <div class="sensor-value" [ngClass]="sensorService.smoke ? 'alert' : 'safe'">
+                    {{ sensorService.smoke ? 'ALERT' : 'CLEAR' }}
+                </div>
+                <div class="sensor-status" [ngClass]="sensorService.smoke ? 'danger' : 'safe'">
+                    {{ sensorService.smoke ? '🚨 Detected' : '✅ Safe' }}
+                </div>
             </div>
         </div>
+    </section>
 
-        <!-- Environmental Sensors (Original) -->
-        <div class="sensor-card temperature">
-            <div class="sensor-icon">🌡️</div>
-            <div class="sensor-label">Temperature</div>
-            <div class="sensor-value">{{ sensorService.temperature }}°C</div>
-            <div class="sensor-status" [ngClass]="sensorService.temperature > 50 ? 'warning' : 'normal'">
-                {{ sensorService.temperature > 50 ? '⚠️ High' : '✅ Normal' }}
+    <!-- Production Monitoring Section -->
+    <section class="sensor-section">
+        <div class="section-header">
+            <h2>📦 Production Monitoring</h2>
+            <p>Weight and product tracking</p>
+        </div>
+        <div class="sensors-grid two-column">
+            <div class="sensor-card weight">
+                <div class="sensor-icon">⚖️</div>
+                <div class="sensor-label">Weight</div>
+                <div class="sensor-value">{{ sensorService.weight }} kg</div>
+                <div class="sensor-status normal">
+                    {{ sensorService.weight > 0 ? '📦 Detected' : '⏳ Waiting' }}
+                </div>
+            </div>
+
+            <div class="sensor-card product">
+                <div class="sensor-icon">📌</div>
+                <div class="sensor-label">Product Number</div>
+                <div class="sensor-value product-text">{{ sensorService.productNumber || '---' }}</div>
+                <div class="sensor-status normal">
+                    {{ sensorService.productNumber ? '✅ Registered' : '⏳ Pending' }}
+                </div>
             </div>
         </div>
-
-        <div class="sensor-card smoke">
-            <div class="sensor-icon">💨</div>
-            <div class="sensor-label">Smoke Detector</div>
-            <div class="sensor-value" [ngClass]="sensorService.smoke ? 'alert' : 'safe'">
-                {{ sensorService.smoke ? 'ALERT' : 'CLEAR' }}
-            </div>
-            <div class="sensor-status" [ngClass]="sensorService.smoke ? 'danger' : 'safe'">
-                {{ sensorService.smoke ? '🚨 Detected' : '✅ Safe' }}
-            </div>
-        </div>
-
-        <div class="sensor-card weight">
-            <div class="sensor-icon">⚖️</div>
-            <div class="sensor-label">Weight</div>
-            <div class="sensor-value">{{ sensorService.weight }} kg</div>
-            <div class="sensor-status normal">
-                {{ sensorService.weight > 0 ? '📦 Detected' : '⏳ Waiting' }}
-            </div>
-        </div>
-
-        <div class="sensor-card product">
-            <div class="sensor-icon">📌</div>
-            <div class="sensor-label">Product Number</div>
-            <div class="sensor-value product-text">{{ sensorService.productNumber || '---' }}</div>
-            <div class="sensor-status normal">
-                {{ sensorService.productNumber ? '✅ Registered' : '⏳ Pending' }}
-            </div>
-        </div>
-    </div>
+    </section>
 
     <footer class="dashboard-footer">
-        <p>Live Connection Status:
-            <span class="status-indicator"
-                [ngClass]="sensorService.connectionStatus === 'Connected' ? 'connected' : 'disconnected'">
-                ● {{ sensorService.connectionStatus }}
-            </span>
-        </p>
-        <p class="timestamp">Last Update: {{ lastUpdate | date:'short' }}</p>
+        <div class="footer-content">
+            <div class="footer-item">
+                <span class="footer-label">Connection Status</span>
+                <div class="status-badge"
+                    [ngClass]="sensorService.connectionStatus === 'Connected' ? 'connected' : 'disconnected'">
+                    <span class="status-indicator"></span>
+                    {{ sensorService.connectionStatus }}
+                </div>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-item">
+                <span class="footer-label">Last Update</span>
+                <div class="timestamp">{{ lastUpdate | date:'short' }}</div>
+            </div>
+        </div>
     </footer>
 </div>

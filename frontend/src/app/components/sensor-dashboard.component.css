@@ -7,15 +7,17 @@
 .dashboard-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    padding: 40px 20px;
+    padding: 15px 15px 10px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-header {
     text-align: center;
     color: white;
-    margin-bottom: 50px;
+    margin-bottom: 15px;
     animation: slideDown 0.6s ease-out;
 }
 
@@ -23,18 +25,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-    padding: 20px;
+    gap: 12px;
+    padding: 8px;
 }
 
 .logo-icon {
-    font-size: 4em;
-    animation: bounce 2s infinite;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    font-size: 2.2em;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .dashboard-header h1 {
-    font-size: 2.8em;
+    font-size: 1.6em;
     font-weight: 700;
     margin: 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -42,28 +43,58 @@
 }
 
 .subtitle {
-    font-size: 1.1em;
+    font-size: 0.85em;
     font-weight: 300;
     opacity: 0.95;
-    margin-top: 5px;
+    margin-top: 2px;
+}
+
+.sensor-section {
+    flex: 1;
+    margin-bottom: 12px;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.section-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 10px;
+    padding: 0 10px;
+}
+
+.section-header h2 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: 3px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.section-header p {
+    font-size: 0.75em;
+    opacity: 0.9;
+    font-weight: 300;
 }
 
 .sensors-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    max-width: 1400px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    padding: 0 10px;
+    max-width: 1600px;
     margin: 0 auto;
-    margin-bottom: 50px;
+}
+
+.sensors-grid.two-column {
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .sensor-card {
     background: white;
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
-    border-top: 5px solid #667eea;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+    border-top: 3px solid #667eea;
     border-bottom: 2px solid rgba(102, 126, 234, 0.1);
     animation: fadeInUp 0.6s ease-out;
     position: relative;
@@ -86,8 +117,16 @@
 }
 
 .sensor-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.sensor-card.personnel {
+    border-top-color: #667eea;
+}
+
+.sensor-card.ppe {
+    border-top-color: #ff6b6b;
 }
 
 .sensor-card.temperature {
@@ -107,25 +146,25 @@
 }
 
 .sensor-icon {
-    font-size: 3em;
-    margin-bottom: 15px;
+    font-size: 1.8em;
+    margin-bottom: 8px;
     display: inline-block;
 }
 
 .sensor-label {
-    font-size: 0.9em;
+    font-size: 0.75em;
     color: #666;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 15px;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
     font-weight: 600;
 }
 
 .sensor-value {
-    font-size: 2.5em;
+    font-size: 1.6em;
     font-weight: 700;
     color: #333;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     word-wrap: break-word;
 }
 
@@ -144,9 +183,9 @@
 }
 
 .sensor-status {
-    font-size: 0.95em;
-    padding: 10px 15px;
-    border-radius: 8px;
+    font-size: 0.8em;
+    padding: 6px 10px;
+    border-radius: 6px;
     text-align: center;
     font-weight: 600;
     display: inline-block;
@@ -175,43 +214,84 @@
 }
 
 .dashboard-footer {
-    text-align: center;
-    color: white;
-    padding: 20px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-    max-width: 1400px;
-    margin: 0 auto;
+    margin-top: auto;
+    padding: 0 10px 8px;
 }
 
-.dashboard-footer p {
-    margin: 10px 0;
-    font-size: 1.1em;
+.footer-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    flex-wrap: wrap;
+}
+
+.footer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.footer-label {
+    font-size: 0.7em;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.footer-divider {
+    width: 2px;
+    height: 30px;
+    background: linear-gradient(to bottom, transparent, #ddd, transparent);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.85em;
+    transition: all 0.3s ease;
+}
+
+.status-badge.connected {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.disconnected {
+    background-color: #ffebee;
+    color: #c62828;
 }
 
 .status-indicator {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    background-color: #4caf50;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    margin-right: 8px;
-    animation: blink 1s infinite;
 }
 
-.status-indicator.connected {
+.status-badge.connected .status-indicator {
     background-color: #4caf50;
     animation: blink 1s infinite;
 }
 
-.status-indicator.disconnected {
+.status-badge.disconnected .status-indicator {
     background-color: #f44336;
-    animation: none;
 }
 
 .timestamp {
     font-size: 0.9em;
-    opacity: 0.8;
+    color: #333;
+    font-weight: 600;
 }
 
 /* Animations */
@@ -305,21 +385,43 @@
 }
 
 /* Responsive */
+@media (max-width: 1200px) {
+    .sensors-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard-header h1 {
-        font-size: 2em;
+        font-size: 1.3em;
     }
 
-    .sensors-grid {
+    .section-header h2 {
+        font-size: 0.95em;
+    }
+
+    .sensors-grid,
+    .sensors-grid.two-column {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 12px;
     }
 
     .sensor-card {
-        padding: 20px;
+        padding: 12px;
     }
 
     .sensor-value {
-        font-size: 2em;
+        font-size: 1.3em;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .footer-divider {
+        width: 60%;
+        height: 2px;
     }
 }

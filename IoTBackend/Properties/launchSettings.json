@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "IoTBackend": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:65471;http://localhost:65472"
+    }
+  }
+}

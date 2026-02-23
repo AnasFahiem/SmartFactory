@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Factory Safety Monitor</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Stats Panel -->
+        <aside class="sidebar">
+            <div class="header">
+                <div class="icon">🏭</div>
+                <h1>Safety<span>Monitor</span></h1>
+            </div>
+
+            <div class="status-card" id="overall-status-card">
+                <h2>Plant Status</h2>
+                <div class="status-indicator" id="status-indicator">
+                    <span class="status-text">SAFE</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>Personnel Detected</h3>
+                    <p id="total-detected" class="stat-value">0</p>
+                </div>
+                <div class="stat-item danger">
+                    <h3>PPE Violations</h3>
+                    <p id="total-violations" class="stat-value">0</p>
+                </div>
+            </div>
+
+            <div class="log-panel">
+                <h3>Monitor Log</h3>
+                <ul id="event-log">
+                    <li>System Initialized...</li>
+                    <!-- Log items will be added here -->
+                </ul>
+            </div>
+
+            <div class="footer">
+                <p>System v1.0 | ESP32-CAM</p>
+                <p id="clock">00:00:00</p>
+            </div>
+        </aside>
+
+        <!-- Main Video Feed Area -->
+        <main class="main-content">
+            <div class="video-container">
+                <div class="video-overlay">
+                    <div class="rec-dot"></div> REC - LIVE
+                </div>
+                <img src="/video_feed" alt="Live Camera Feed" class="video-feed" onerror="this.src='/static/placeholder.png'">
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+[Camera] Connecting to source: 0
+[Camera] Connected to 0
+Loading YOLO model from best.pt...
+Model loaded successfully.
+Classes: {0: 'Hardhat', 1: 'NO-Hardhat', 2: 'NO-Safety Vest', 3: 'Person', 4: 'Safety Vest', 5: 'Safety Gloves', 6: 'Safety Boot', 7: 'Safety Glasses', 8: 'Mask'}
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.1.9:5000
+Press CTRL+C to quit

@@ -1,0 +1,31 @@
+
+> IoTFrontend@1.0.0 start
+> ng serve
+
+- Generating browser application bundles (phase: setup)...
+✔ Browser application bundle generation complete.
+
+Initial chunk files   | Names         |  Raw size
+vendor.js             | vendor        |   2.97 MB | 
+polyfills.js          | polyfills     | 262.57 kB | 
+styles.css, styles.js | styles        | 149.94 kB | 
+main.js               | main          |  64.74 kB | 
+runtime.js            | runtime       |   6.50 kB | 
+
+                      | Initial total |   3.44 MB
+
+Build at: 2026-01-20T23:27:28.109Z - Hash: 87fdf53de10f82a0 - Time: 22634ms
+
+** Angular Live Development Server is listening on localhost:4200, open your browser on http://localhost:4200/ **
+
+
+√ Compiled successfully.
+✔ Browser application bundle generation complete.
+
+
+
+5 unchanged chunks
+
+Build at: 2026-01-20T23:27:30.629Z - Hash: 87fdf53de10f82a0 - Time: 2411ms
+
+√ Compiled successfully.

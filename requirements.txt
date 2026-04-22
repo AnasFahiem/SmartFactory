@@ -4,3 +4,7 @@ ultralytics
 numpy
 requests
 python-dotenv
+scikit-learn
+joblib
+pandas
+paho-mqtt

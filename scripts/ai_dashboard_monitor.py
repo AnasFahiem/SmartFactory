@@ -23,7 +23,7 @@ MQTT_TOPIC = "factory/#"
 # يرجى تعديلها ببيانات البريد الخاص بك (يجب استخدام App Password وليس الباسورد العادي)
 EMAIL_SENDER = "anasfaheim2003@gmail.com"
 EMAIL_PASSWORD = "nydy piev ioaw ddxv"
-EMAIL_RECEIVER = "anasfahiem18@gmail.com"
+EMAIL_RECEIVER = "mekhaelgerges13@gmail.com"
 
 # ==========================================
 # 3. تحميل الموديل

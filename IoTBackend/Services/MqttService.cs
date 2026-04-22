@@ -107,6 +107,13 @@ public class MqttService : BackgroundService
                 total_people = 0, // This will be updated by your CameraController
                 violations = 0
             });
+
+            // 4. Handle AI Alert from Python Monitor
+            if (root.TryGetProperty("ai_alert", out var aiAlert) && aiAlert.GetBoolean())
+            {
+                string msgText = root.TryGetProperty("message", out var msgNode) ? msgNode.GetString() : "AI Anomaly Detected!";
+                await _hubContext.Clients.All.SendAsync("ReceiveAiAlert", msgText);
+            }
         }
         catch (Exception ex)
         {

@@ -19,6 +19,15 @@
         </span>
     </div>
 
+    <!-- AI Alert Banner -->
+    <div class="ai-alert-banner" *ngIf="sensorService.aiAlertMessage">
+        <div class="ai-alert-icon">🤖 🚨</div>
+        <div class="ai-alert-text">
+            <strong>AI Anomaly Detected!</strong><br/>
+            {{ sensorService.aiAlertMessage }}
+        </div>
+    </div>
+
     <!-- Vision & Safety Section -->
     <section class="sensor-section">
         <div class="section-header">

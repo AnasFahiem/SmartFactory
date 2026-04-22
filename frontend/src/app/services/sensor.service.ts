@@ -25,6 +25,7 @@ export class SensorService {
     public productNumber: string = '';
     public currentFrame: string = ''; 
     public connectionStatus: string = 'Disconnected';
+    public aiAlertMessage: string = '';
 
     constructor(private http: HttpClient) { }
 
@@ -69,6 +70,14 @@ export class SensorService {
 
         this.hubConnection.on('ReceiveProductNumberUpdate', (productNumber: string) => {
             this.productNumber = productNumber;
+        });
+
+        this.hubConnection.on('ReceiveAiAlert', (message: string) => {
+            this.aiAlertMessage = message;
+            // Auto clear alert after 10 seconds
+            setTimeout(() => {
+                this.aiAlertMessage = '';
+            }, 10000);
         });
 
         // --- Connection Management ---

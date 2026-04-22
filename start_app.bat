@@ -32,6 +32,10 @@ rem Start Angular frontend
 echo Starting Frontend (4200)...
 start "Frontend" /b cmd /c "cd /d ""%~dp0frontend"" && npm start > ""%~dp0frontend_log.txt"" 2>&1"
 
+rem Start AI Dashboard Monitor
+echo Starting AI Monitor...
+start "AIMonitor" /b cmd /c "cd /d ""%~dp0"" && ""%~dp0venv\Scripts\python"" scripts\ai_dashboard_monitor.py > ""%~dp0ai_monitor_log.txt"" 2>&1"
+
 echo Waiting for servers to initialize (15s)...
 timeout /t 15 >nul
 

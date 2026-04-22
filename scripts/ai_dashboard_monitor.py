@@ -129,8 +129,27 @@ Immediate inspection is required!
     except Exception as e:
         print(f"Error processing message: {e}")
 
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"AI Monitor is running!")
+
+def run_dummy_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), DummyHandler)
+    print(f"Dummy Web Server started on port {port} for Render.com free tier")
+    server.serve_forever()
+
 if __name__ == "__main__":
     print("Starting Factory AI Monitor...")
+    
+    # Start the dummy web server in a background thread
+    threading.Thread(target=run_dummy_server, daemon=True).start()
     
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="AI_Monitor_Script")
     client.username_pw_set(MQTT_USER, MQTT_PASS)

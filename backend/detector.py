@@ -11,27 +11,20 @@ except ImportError:
 class PPE_Detector:
     def __init__(self, model_path='best.pt'):
         """
-        Initialize the YOLOv8 model.
+        Initialize the YOLOv11 model.
         """
         self.model = None
         
         if YOLO is not None:
             print(f"Loading YOLO model from {model_path}...")
             try:
-                # ---------------------------------------------------------
-                # NOTE: To use the Roboflow model 'orbit-xboi4/safety-sbfwr'
-                # Download 'best.pt' and place it in the backend folder.
-                # ---------------------------------------------------------
                 self.model = YOLO(model_path)
                 print("Model loaded successfully.")
-                print("Classes:", self.model.names) # Print classes to console
+                print("Classes:", self.model.names)
             except Exception as e:
                 print(f"Error loading model: {e}")
-                print("Trying default yolov8n.pt as fallback...")
-                try:
-                    self.model = YOLO('yolov8n.pt')
-                except:
-                    pass
+                print("WARNING: Custom best.pt model missing. AI features disabled.")
+                self.model = None
         else:
             print("Running in Safe Mode (No AI). Install 'ultralytics' to fix.")
 
@@ -39,12 +32,12 @@ class PPE_Detector:
         """
         Run detection on a single frame.
         """
-        # --- NO LIBRARY INSTALLED ---
+        # --- NO LIBRARY/MODEL INSTALLED ---
         if self.model is None:
             # Just display a warning on the frame
-            cv2.putText(frame, "AI LIBRARIES MISSING", (50, 50), 
+            cv2.putText(frame, "AI DETECTION DISABLED", (50, 50), 
                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            cv2.putText(frame, "Please install requirements.txt", (50, 90), 
+            cv2.putText(frame, "Model best.pt not found or load failed", (50, 90), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
             return frame, {"total_people": 0, "violations": 0}
         # -----------------------------
@@ -52,41 +45,19 @@ class PPE_Detector:
         results = self.model(frame, verbose=False, conf=0.10)
         result = results[0]
 
-        total_people = 0
-        violations = 0
+        # Draw detections on a copy to prevent double drawing
+        annotated_frame = frame.copy()
         
-        # Draw detections
-        annotated_frame = result.plot()
-        
-        # DEBUG: Print detected classes to terminal to verify what the model sees
-        if len(result.boxes) > 0:
-            print(f"Detections: {[int(b.cls[0]) for b in result.boxes]}")
-
-        
-        # Count statistics based on class names
-        # We check result.names for the actual class labels
-        names = result.names
-        # Custom Mapping for Safety Model (Orbit-xboi4)
-        # Since the model only returns IDs 0-4, we map them to standard safety classes.
-        # This is a best-guess based on standard PPE datasets.
-        # Adjust if labels are swapped (e.g. if 0 shows as 'No-Helmet' but is actually 'Helmet').
+        # 17 SH17 Dataset Classes
         CLASS_MAP = {
-            0: 'Hardhat',
-            1: 'NO-Hardhat',
-            2: 'NO-Safety Vest',
-            3: 'Person',
-            4: 'Safety Vest',
-            5: 'Safety Gloves',
-            6: 'Safety Boot',
-            7: 'Safety Glasses',
-            8: 'Mask'
+            0: 'Person', 1: 'Ear', 2: 'Earmuffs', 3: 'Face', 4: 'Face-guard', 
+            5: 'Face-mask', 6: 'Foot', 7: 'Tool', 8: 'Glasses', 9: 'Gloves', 
+            10: 'Helmet', 11: 'Hands', 12: 'Head', 13: 'Medical-suit', 
+            14: 'Shoes', 15: 'Safety-suit', 16: 'Safety-vest'
         }
 
-        # Debug: Print what we found to console periodically
-        # print(names) 
-        
-        # Store valid detections to handle conflicts later
-        valid_detections = [] # list of (cls_id, conf, box, label, color)
+        # Detections list
+        detections = []
         
         for box in result.boxes:
             cls_id = int(box.cls[0])
@@ -94,158 +65,141 @@ class PPE_Detector:
             x1, y1, x2, y2 = box.xyxy[0]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
             
-            # --- 1. HARDHAT COLOR FILTER ---
-            # If detecting "Hardhat" (0), verify it is NOT hair (Black/Brown)
-            if cls_id == 0:
-                # Extract ROI
-                roi = frame[y1:y2, x1:x2]
-                if roi.size > 0:
-                    # Convert to HSV
-                    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-                    # Check Brightness (Value)
-                    mean_val = np.mean(hsv[:, :, 2])
-                    # Hair is usually dark (Value < 60-80). Hardhats (White/Yellow) are bright (>100).
-                    # Red/Blue hardhats might be darker but still > hair.
-                    
-                    print(f"Hardhat Candidate Conf:{conf:.2f} Brightness:{mean_val:.1f}")
-                    
-                    if mean_val < 70: # Threshold for "Dark Object" (Hair)
-                        print("-> Rejected (Too Dark/Hair)")
-                        continue
-            
-            # --- 2. GEOMETRIC & CONFIDENCE FILTERS ---
-            if cls_id == 0:
-                 # Aspect Ratio Check: Hardhats are "Squarish" or "Wide". 
-                 # Human Heads/Faces are "Tall" (Rectangular).
-                 # If Height > 1.25 * Width, it's likely a Face/Head, not a Hat.
-                 width = x2 - x1
-                 height = y2 - y1
-                 aspect_ratio = height / width
-                 
-                 if aspect_ratio > 1.25:
-                     print(f"-> Rejected (Too Tall: AR {aspect_ratio:.2f})")
-                     continue
-
-                 if conf < 0.80: continue # Strict Confidence for Hardhat
-            
-            if cls_id in [5, 7, 8]:
-                print(f"Small PPE Candidate {cls_id}: {conf:.2f}") # Debug Gloves/Glasses/Masks
-                if conf < 0.10: continue # Lenient for Small PPE
-            
-            # Get Label name
-            if cls_id in CLASS_MAP:
-                raw_label = CLASS_MAP[cls_id]
-            else:
-                raw_label = names[cls_id]
+            # Skip if invalid class ID
+            if cls_id not in CLASS_MAP:
+                continue
                 
-            label = f"{raw_label} {conf:.2f}"
+            raw_label = CLASS_MAP[cls_id]
             
-            # Determine Color
-            color = (0, 0, 255) if 'no-' in label.lower() else (0, 255, 0)
-            if 'person' in label.lower(): color = (255, 255, 0)
-            if 'boot' in label.lower(): color = (255, 0, 255) # Magenta for boots
+            # Confidence filtering:
+            # Small PPE classes can have lower thresholds (0.15) to detect minor items
+            # Major classes (Person, Helmet, Vest, Head) require a standard threshold (0.25)
+            is_small_ppe = cls_id in [2, 5, 8, 9] # Earmuffs, Face-mask, Glasses, Gloves
+            thresh = 0.15 if is_small_ppe else 0.25
             
-            valid_detections.append({
+            if conf < thresh:
+                continue
+                
+            detections.append({
                 'id': cls_id,
                 'conf': conf,
                 'box': (x1, y1, x2, y2),
-                'label': label,
-                'color': color,
-                'raw_label': raw_label.lower()
+                'label': f"{raw_label} {conf:.2f}",
+                'raw_label': raw_label
             })
 
-        # --- 3. CONFLICT RESOLUTION (Vest vs No-Vest) ---
-        # If we have conflicting classes overlapping, pick the higher confidence one.
-        indices_to_remove = set()
-        
-        for i in range(len(valid_detections)):
-            if i in indices_to_remove: continue
+        # Helper to compute Intersection over Area (IoA): Area(A ∩ B) / Area(A)
+        def get_ioa(box_a, box_b):
+            x1_a, y1_a, x2_a, y2_a = box_a
+            x1_b, y1_b, x2_b, y2_b = box_b
             
-            det_a = valid_detections[i]
-            box_a = det_a['box']
-            label_a = det_a['raw_label']
+            xA = max(x1_a, x1_b)
+            yA = max(y1_a, y1_b)
+            xB = min(x2_a, x2_b)
+            yB = min(y2_a, y2_b)
             
-            for j in range(i + 1, len(valid_detections)):
-                if j in indices_to_remove: continue
-                
-                det_b = valid_detections[j]
-                box_b = det_b['box']
-                label_b = det_b['raw_label']
-                
-                # Check conflict: Vest vs No-Vest
-                conflict = False
-                if ('vest' in label_a and 'no-safety vest' in label_b) or \
-                   ('vest' in label_b and 'no-safety vest' in label_a):
-                     conflict = True
-                     
-                if conflict:
-                    # Calculate IoU (Intersection over Union) or simple overlap
-                    # Simple overlap: do the boxes intersect significantly?
-                    xA = max(box_a[0], box_b[0])
-                    yA = max(box_a[1], box_b[1])
-                    xB = min(box_a[2], box_b[2])
-                    yB = min(box_a[3], box_b[3])
-                    
-                    interArea = max(0, xB - xA) * max(0, yB - yA)
-                    if interArea > 0: # They overlap
-                         # Remove lower confidence
-                         if det_a['conf'] >= det_b['conf']:
-                             indices_to_remove.add(j)
-                             print(f"Resolved Conflict: Kept {label_a}, Removed {label_b}")
-                         else:
-                             indices_to_remove.add(i)
-                             print(f"Resolved Conflict: Kept {label_b}, Removed {label_a}")
-                             break # Stop checking i, it's gone
-        
-        # --- DRAW FINAL DETECTIONS ---
-        detected_class_names = []
-        
-        for i, det in enumerate(valid_detections):
-            if i in indices_to_remove: continue
+            inter_area = max(0, xB - xA) * max(0, yB - yA)
+            area_a = (x2_a - x1_a) * (y2_a - y1_a)
             
-            x1, y1, x2, y2 = det['box']
-            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), det['color'], 2)
-            cv2.putText(annotated_frame, det['label'], (x1, y1-10), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, det['color'], 2)
-            
-            detected_class_names.append(det['raw_label'])
-        
-        # --- STATS LOGIC ---
-        
-        has_person = any('person' in l for l in detected_class_names)
-        
-        # Check Explicit Violations
-        for l in detected_class_names:
-            is_violation = False
-            if 'no-' in l or 'missing' in l: is_violation = True
-            # Unprotected parts checks
-            if 'head' in l and 'hardhat' not in l: is_violation = True 
-            
-            if is_violation:
-                # print(f"Explicit Violation: {l}")
-                violations += 1
-                
-        # Check Implicit Violations (Person but missing items)
-        # Requirement: Hardhat AND Vest
-        has_hardhat = any('hardhat' in l and 'no-' not in l for l in detected_class_names)
-        has_vest = any('vest' in l and 'no-' not in l for l in detected_class_names)
-        
-        if has_person and (not has_hardhat or not has_vest):
-             if not has_hardhat and not any('no-hardhat' in l for l in detected_class_names):
-                 print("Implicit Violation: Missing Hardhat")
-                 violations += 1
-                 
-             if not has_vest and not any('no-safety vest' in l for l in detected_class_names):
-                 print("Implicit Violation: Missing Vest")
-                 violations += 1
-        
-        # Normalize violations (boolean status usually preferred for UI)
-        if violations > 0:
-             # Ensure at least 1 count
-             pass
+            if area_a == 0:
+                return 0
+            return inter_area / area_a
 
-        # Calculate actual count of people
-        total_people = sum(1 for l in detected_class_names if 'person' in l)
+        # Extract specific classes for spatial overlap violation analysis
+        people = [d for d in detections if d['id'] == 0]
+        heads = [d for d in detections if d['id'] == 12]
+        helmets = [d for d in detections if d['id'] == 10]
+        vests = [d for d in detections if d['id'] == 16]
+
+        # Tracking violations
+        helmet_violations = set() # indices of heads or people violating helmet rule
+        vest_violations = set()   # indices of people violating vest rule
+
+        # 1. Helmet Check (Primary: on detected Heads)
+        for idx, head in enumerate(heads):
+            # Check if any helmet overlaps this head >= 30%
+            has_helmet = False
+            for helmet in helmets:
+                if get_ioa(head['box'], helmet['box']) >= 0.30:
+                    has_helmet = True
+                    break
+            if not has_helmet:
+                helmet_violations.add(('head', idx))
+
+        # 2. Helmet Check (Secondary fallback: on People where no Head is detected nearby)
+        for idx, person in enumerate(people):
+            # Find if there are any heads inside this person
+            has_associated_head = False
+            for head in heads:
+                if get_ioa(head['box'], person['box']) >= 0.70:
+                    has_associated_head = True
+                    break
+            
+            if not has_associated_head:
+                # No separate Head detected, check if there's any Helmet overlapping the person box
+                # Helmet box should be mostly inside the person box
+                has_helmet = False
+                for helmet in helmets:
+                    if get_ioa(helmet['box'], person['box']) >= 0.70:
+                        has_helmet = True
+                        break
+                if not has_helmet:
+                    helmet_violations.add(('person', idx))
+
+        # 3. Vest Check (On all People)
+        for idx, person in enumerate(people):
+            # Check if any vest is worn by this person (vest should be mostly inside person box)
+            has_vest = False
+            for vest in vests:
+                if get_ioa(vest['box'], person['box']) >= 0.50:
+                    has_vest = True
+                    break
+            if not has_vest:
+                vest_violations.add(idx)
+
+        # Draw boxes and labels
+        # Colors: Green for compliant PPE/Person, Red for violations, Cyan for neutrals
+        for idx, person in enumerate(people):
+            x1, y1, x2, y2 = person['box']
+            has_person_viol = (idx in vest_violations) or (('person', idx) in helmet_violations)
+            color = (0, 0, 255) if has_person_viol else (0, 255, 0)
+            
+            label_suffix = ""
+            if idx in vest_violations and ('person', idx) in helmet_violations:
+                label_suffix = " (No Helmet & Vest)"
+            elif idx in vest_violations:
+                label_suffix = " (No Vest)"
+            elif ('person', idx) in helmet_violations:
+                label_suffix = " (No Helmet)"
+                
+            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(annotated_frame, f"{person['label']}{label_suffix}", (x1, y1-10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+        for idx, head in enumerate(heads):
+            x1, y1, x2, y2 = head['box']
+            has_head_viol = ('head', idx) in helmet_violations
+            color = (0, 0, 255) if has_head_viol else (0, 255, 0)
+            
+            label_suffix = " (No Helmet)" if has_head_viol else ""
+            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 1)
+            cv2.putText(annotated_frame, f"{head['label']}{label_suffix}", (x1, y1-10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
+
+        # Draw other compliant objects/neutral items
+        other_detections = [d for d in detections if d['id'] not in [0, 12]]
+        for det in other_detections:
+            x1, y1, x2, y2 = det['box']
+            color = (255, 255, 0) # Cyan for small items or other clothes
+            if det['id'] in [10, 16]: # Helmet/Vest
+                color = (0, 255, 0)
+            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(annotated_frame, det['label'], (x1, y1-10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+        # Calculate final stats
+        total_people = len(people)
+        violations = len(helmet_violations) + len(vest_violations)
 
         stats = {
             "total_people": total_people,

@@ -57,7 +57,7 @@ def train_model():
         data=yaml_path,
         epochs=100,
         imgsz=1024,         # Higher res: SH17 images are up to 8192px — 1024 catches small objects
-        batch=8,            # Optimized for yolo11m at imgsz=1024 on RTX 3070 Ti (8GB)
+        batch=4,            # Lowered to 4 to prevent CUDA OOM and system lag
         device=device,
         amp=True,           # Mixed precision (FP16) — halves VRAM usage, speeds training
         patience=20,        # Stop early if no improvement for 20 epochs

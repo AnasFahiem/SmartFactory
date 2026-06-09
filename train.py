@@ -70,14 +70,15 @@ def train_model():
     # ─── DONE ─────────────────────────────────────────────────────────────────
     print("\n" + "─" * 60)
     print("✅ Training Complete!")
-    best_weights = os.path.join(script_dir, "runs", "detect", "sh17_train", "weights", "best.pt")
+    save_dir = results.save_dir
+    best_weights = os.path.join(save_dir, "weights", "best.pt")
     print(f"📦 Best model saved at:\n   {best_weights}")
     print("\nNext step: Copy best.pt to the backend/ folder:")
     print(f"   Copy-Item '{best_weights}' '{os.path.join(script_dir, 'backend', 'best.pt')}' -Force")
 
     # ─── EXPORT METRICS TO EXCEL ──────────────────────────────────────────────
     try:
-        csv_path = os.path.join(script_dir, "runs", "detect", "sh17_train", "results.csv")
+        csv_path = os.path.join(save_dir, "results.csv")
         excel_path = os.path.join(script_dir, "SmartFactory_SH17_Metrics.xlsx")
         from scripts.export_metrics import export_training_results
         export_training_results(csv_path, excel_path)

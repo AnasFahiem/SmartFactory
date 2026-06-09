@@ -144,9 +144,27 @@ def export_training_results(results_csv_path, output_excel_path):
     return True
 
 if __name__ == "__main__":
-    # Test execution
+    import glob
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.dirname(script_dir)
-    results_csv = os.path.join(root_dir, "runs", "detect", "sh17_train", "results.csv")
+    
+    # Auto-detect the latest sh17_train folder
+    detect_dir = os.path.join(root_dir, "runs", "detect")
+    folders = glob.glob(os.path.join(detect_dir, "sh17_train*"))
+    
+    if folders:
+        # Sort folders by creation/modification time or name suffix
+        # sh17_train, sh17_train2, sh17_train3...
+        def get_run_num(path):
+            name = os.path.basename(path)
+            num_part = name.replace("sh17_train", "")
+            return int(num_part) if num_part.isdigit() else 0
+            
+        latest_folder = max(folders, key=get_run_num)
+        print(f"Auto-detected latest run directory: {latest_folder}")
+        results_csv = os.path.join(latest_folder, "results.csv")
+    else:
+        results_csv = os.path.join(detect_dir, "sh17_train", "results.csv")
+        
     output_excel = os.path.join(root_dir, "SmartFactory_SH17_Metrics.xlsx")
     export_training_results(results_csv, output_excel)

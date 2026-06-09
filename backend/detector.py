@@ -42,7 +42,9 @@ class PPE_Detector:
             return frame, {"total_people": 0, "violations": 0}
         # -----------------------------
 
-        results = self.model(frame, verbose=False, conf=0.10)
+        # Only detect Person (0), Earmuffs (2), Face-guard (4), Face-mask (5), Glasses (8), 
+        # Gloves (9), Helmet (10), Head (12), and Safety-vest (16)
+        results = self.model(frame, verbose=False, conf=0.10, classes=[0, 2, 4, 5, 8, 9, 10, 12, 16])
         result = results[0]
 
         # Draw detections on a copy to prevent double drawing

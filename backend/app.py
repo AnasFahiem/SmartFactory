@@ -12,9 +12,14 @@ app = Flask(__name__)
 CORS(app)
 
 # --- CONFIGURATION ---
-AZURE_URL = "https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload"
+# The URL of the .NET Backend where the camera frames are pushed.
+# Use localhost for local testing via start_app.bat, or the Azure URL for cloud deployment.
+# Local: http://localhost:5005/api/camera/upload
+# Cloud: https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload
+import os
+API_URL = os.getenv("API_URL", "http://localhost:5005/api/camera/upload")
 MY_SECRET = "YourSuperSecretKey123"
-CAMERA_SOURCE = "" # or your IP Webcam URL
+CAMERA_SOURCE = "" # Leave empty (0) for default webcam, or put an IP camera URL here
 
 # Global stats
 current_stats = {"total_people": 0, "violations": 0}
@@ -59,7 +64,7 @@ def azure_push_loop():
             }
             
             # Non-blocking post (short timeout)
-            session.post(AZURE_URL, json=payload, timeout=0.5)
+            session.post(API_URL, json=payload, timeout=0.5)
 
         except Exception as e:
             print(f"Push Error: {e}")

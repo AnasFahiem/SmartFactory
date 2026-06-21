@@ -19,6 +19,7 @@ yolo*.onnx
 
 # Keep only the trained model in backend/
 *.pt
+!backend/best.pt
 
 # IDE
 .vscode/

@@ -46,25 +46,24 @@ def train_model():
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
     # ─── TRAIN ────────────────────────────────────────────────────────────────
-    # Settings optimized for RTX 3070 Ti (8GB VRAM):
-    #   - imgsz=1024 : Captures small objects (gloves, earmuffs, glasses)
-    #   - batch=4    : Lowered to 4 to fit comfortably in 8GB VRAM without Out of Memory (OOM) errors
-    #   - epochs=100 : Enough for the model to fully converge on SH17
-    #   - patience=20: Stop early if validation mAP doesn't improve for 20 epochs
-    #   - device=0   : Use GPU (the NVIDIA card)
-    #   - amp=True   : Automatic Mixed Precision — halves VRAM usage, speeds training
+    # Corrected Settings for RTX 3070 Ti (8GB VRAM):
+    #   - imgsz=800  : A perfect sweet spot. 1024 forced the batch size too low.
+    #   - batch=8    : MUST be >= 4. A batch size of 1 breaks Batch Normalization!
+    #   - optimizer='auto' : Defaults back to SGD with Momentum (more stable than AdamW for YOLO)
+    #   - mixup/copy_paste : Removed (was causing underfitting)
     results = model.train(
         data=yaml_path,
-        epochs=100,
-        imgsz=1024,         # Higher res: SH17 images are up to 8192px — 1024 catches small objects
-        batch=4,            # Lowered to 4 to prevent CUDA OOM and system lag
+        epochs=150,
+        imgsz=800,           # Reduced from 1024 to allow a healthy batch size
+        batch=8,             # Hardcoded to 8 (AutoBatch picking 1 ruined the accuracy)
         device=device,
-        amp=True,           # Mixed precision (FP16) — halves VRAM usage, speeds training
-        patience=20,        # Stop early if no improvement for 20 epochs
+        amp=True,
+        patience=30,
         plots=True,
         verbose=True,
+        optimizer='auto',    # Revert to standard SGD
         project=os.path.join(script_dir, "runs", "detect"),
-        name="sh17_train",  # Results saved to runs/detect/sh17_train/
+        name="sh17_train_fixed",  
     )
 
     # ─── DONE ─────────────────────────────────────────────────────────────────

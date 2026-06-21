@@ -22,19 +22,19 @@ if errorlevel 1 (
 
 rem Start Flask camera/PPE backend
 echo Starting Python Backend (5000)...
-start "FlaskBackend" /b cmd /c "cd /d ""%~dp0backend"" && ""%~dp0venv\Scripts\python"" app.py > ""%~dp0backend_log.txt"" 2>&1"
+start "FlaskBackend" /b cmd /c "cd /d "%~dp0backend" && python app.py > "%~dp0backend_log.txt" 2>&1"
 
 rem Start .NET IoT backend
 echo Starting IoT (.NET) Backend (5005)...
-start "IoTBackend" /b cmd /c "cd /d ""%~dp0IoTBackend"" && set ASPNETCORE_URLS=http://localhost:5005 && dotnet run > ""%~dp0iotbackend_log.txt"" 2>&1"
+start "IoTBackend" /b cmd /c "cd /d "%~dp0IoTBackend" && set ASPNETCORE_URLS=http://localhost:5005 && dotnet run > "%~dp0iotbackend_log.txt" 2>&1"
 
 rem Start Angular frontend
 echo Starting Frontend (4200)...
-start "Frontend" /b cmd /c "cd /d ""%~dp0frontend"" && npm start > ""%~dp0frontend_log.txt"" 2>&1"
+start "Frontend" /b cmd /c "cd /d "%~dp0frontend" && npm start > "%~dp0frontend_log.txt" 2>&1"
 
 rem Start AI Dashboard Monitor
 echo Starting AI Monitor...
-start "AIMonitor" /b cmd /c "cd /d ""%~dp0"" && ""%~dp0venv\Scripts\python"" scripts\ai_dashboard_monitor.py > ""%~dp0ai_monitor_log.txt"" 2>&1"
+start "AIMonitor" /b cmd /c "cd /d "%~dp0" && python scripts\ai_dashboard_monitor.py > "%~dp0ai_monitor_log.txt" 2>&1"
 
 echo Waiting for servers to initialize (15s)...
 timeout /t 15 >nul

@@ -42,9 +42,7 @@ class PPE_Detector:
             return frame, {"total_people": 0, "violations": 0}
         # -----------------------------
 
-        # Only detect Person (0), Earmuffs (2), Face-guard (4), Face-mask (5), Glasses (8), 
-        # Gloves (9), Helmet (10), Head (12), and Safety-vest (16)
-        results = self.model(frame, verbose=False, conf=0.10, classes=[0, 2, 4, 5, 8, 9, 10, 12, 16])
+        results = self.model(frame, verbose=False, conf=0.50)
         result = results[0]
 
         # Draw detections on a copy to prevent double drawing
@@ -71,15 +69,15 @@ class PPE_Detector:
             if cls_id not in CLASS_MAP:
                 continue
                 
+            # Ignore non-safety classes requested by user (Ear, Face, Foot, Hands)
+            if cls_id in [1, 3, 6, 11]:
+                continue
+                
             raw_label = CLASS_MAP[cls_id]
             
             # Confidence filtering:
-            # Small PPE classes can have lower thresholds (0.15) to detect minor items
-            # Major classes (Person, Helmet, Vest, Head) require a standard threshold (0.25)
-            is_small_ppe = cls_id in [2, 5, 8, 9] # Earmuffs, Face-mask, Glasses, Gloves
-            thresh = 0.15 if is_small_ppe else 0.25
-            
-            if conf < thresh:
+            # Require 50% confidence for all classes to avoid floating ghost boxes
+            if conf < 0.50:
                 continue
                 
             detections.append({
@@ -189,7 +187,9 @@ class PPE_Detector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
 
         # Draw other compliant objects/neutral items
-        other_detections = [d for d in detections if d['id'] not in [0, 12]]
+        # Exclude: Person(0), Ear(1), Face(3), Foot(6), Hands(11), Head(12)
+        IGNORE_DRAW_CLASSES = [0, 1, 3, 6, 11, 12]
+        other_detections = [d for d in detections if d['id'] not in IGNORE_DRAW_CLASSES]
         for det in other_detections:
             x1, y1, x2, y2 = det['box']
             color = (255, 255, 0) # Cyan for small items or other clothes

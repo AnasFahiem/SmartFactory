@@ -3,20 +3,27 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
 .env
 
-# Dataset (Too large for GitHub standard)
+# Dataset (Too large for GitHub)
 dataset/
 *.zip
 
 # Training Runs (Models & Logs)
 runs/
+
+# YOLO pretrained weights (download on demand)
+yolo*.pt
+yolo*.onnx
+
+# Keep only the trained model in backend/
 *.pt
-!best.pt
 
 # IDE
 .vscode/
 .idea/
+.vs/
 
 # System
 Thumbs.db
@@ -26,8 +33,17 @@ Desktop.ini
 *_log.txt
 *.log
 
+# Temp Excel lock files
+~$*.xlsx
+
 # Frontend
 node_modules/
 .angular/
 dist/
-.vscode/
+
+# Spec Kit internal files
+.specify/
+.agents/
+.github/
+specs/
+AGENTS.md

@@ -93,21 +93,24 @@ Training configuration:
 
 Before arriving at our final production model, we went through 3 major iterations to solve specific challenges with the SH17 dataset:
 
-### 1. Attempt 1: Baseline YOLOv11n (`sh17_train`)
-- **Setup**: Initial out-of-the-box training using the Nano model.
+### 1. Attempt 1: Baseline (`sh17_train8`)
+- **Setup**: Initial out-of-the-box training.
+- **Hyperparameters**: `Model: YOLOv11m` | `imgsz: 1024` | `epochs: 100` | `batch: 4` | `optimizer: SGD (auto)` | `lr0: 0.01`
 - **Metrics**: mAP50 = `68.8%` | Precision = `73.7%` | Recall = `64.5%`
 - **Result**: The model struggled significantly with "ghost boxes" (detecting people or helmets where there was only empty floor or machinery).
-- **Issue**: The dataset lacked enough negative examples, and the Nano model lacked the capacity for 17 complex classes.
+- **Issue**: The dataset lacked enough negative examples, and the image size was too large for the batch size, causing instability.
 
-### 2. Attempt 2: Dataset Fix & Architecture Bump (`sh17_train_max_accuracy`)
-- **Setup**: We upgraded to **YOLOv11m (Medium)** and injected pure background images (negatives) into the dataset to teach the model what *not* to detect.
+### 2. Attempt 2: Dataset Fix & AdamW (`sh17_train_max_accuracy`)
+- **Setup**: We injected pure background images (negatives) into the dataset to teach the model what *not* to detect, and switched the optimizer to AdamW.
+- **Hyperparameters**: `Model: YOLOv11m` | `imgsz: 1024` | `epochs: 150` | `batch: auto (-1)` | `optimizer: AdamW` | `lr0: 0.001` | `MixUp: 0.1` | `Copy-Paste: 0.1`
 - **Metrics**: mAP50 = `62.1%` | Precision = `74.7%` | Recall = `54.8%`
-- **Result**: False positives on empty backgrounds dropped to near zero. However, the model started becoming over-sensitive on actual people, producing noisy bounding boxes with low confidence scores.
+- **Result**: False positives on empty backgrounds dropped to near zero. However, AdamW and the heavy augmentations caused the model to become over-sensitive, producing noisy bounding boxes with low recall.
 
 ### 3. Attempt 3: Final Tuning & Regularization (`sh17_train_fixed2` - Deployed)
-- **Setup**: We kept YOLOv11m but added strict **Early Stopping** (patience=30), refined the confidence threshold to exactly **50%** in the inference script, and utilized advanced data augmentations (Mosaic, HSV jitter).
+- **Setup**: We reverted back to SGD, reduced image size to 800 to double the batch size to 8, removed MixUp, and added strict **Early Stopping** (patience=30).
+- **Hyperparameters**: `Model: YOLOv11m` | `imgsz: 800` | `epochs: 150` | `batch: 8` | `optimizer: SGD (auto)` | `lr0: 0.01` | `patience: 30`
 - **Metrics**: mAP50 = `70.1%` | Precision = `76.4%` | Recall = `66.0%`
-- **Result**: **Success**. Early stopping halted training at epoch 107 just before overfitting occurred. The strict 50% threshold completely eliminated the noisy ghost boxes, resulting in a stable, production-ready detector.
+- **Result**: **Success**. Early stopping halted training at epoch 107 just before overfitting occurred. The strict 50% inference threshold combined with SGD stability completely eliminated the noisy ghost boxes, resulting in a stable, production-ready detector.
 
 ---
 

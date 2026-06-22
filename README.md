@@ -95,15 +95,18 @@ Before arriving at our final production model, we went through 3 major iteration
 
 ### 1. Attempt 1: Baseline YOLOv11n (`sh17_train`)
 - **Setup**: Initial out-of-the-box training using the Nano model.
+- **Metrics**: mAP50 = `68.8%` | Precision = `73.7%` | Recall = `64.5%`
 - **Result**: The model struggled significantly with "ghost boxes" (detecting people or helmets where there was only empty floor or machinery).
 - **Issue**: The dataset lacked enough negative examples, and the Nano model lacked the capacity for 17 complex classes.
 
 ### 2. Attempt 2: Dataset Fix & Architecture Bump (`sh17_train_max_accuracy`)
 - **Setup**: We upgraded to **YOLOv11m (Medium)** and injected pure background images (negatives) into the dataset to teach the model what *not* to detect.
+- **Metrics**: mAP50 = `62.1%` | Precision = `74.7%` | Recall = `54.8%`
 - **Result**: False positives on empty backgrounds dropped to near zero. However, the model started becoming over-sensitive on actual people, producing noisy bounding boxes with low confidence scores.
 
 ### 3. Attempt 3: Final Tuning & Regularization (`sh17_train_fixed2` - Deployed)
 - **Setup**: We kept YOLOv11m but added strict **Early Stopping** (patience=30), refined the confidence threshold to exactly **50%** in the inference script, and utilized advanced data augmentations (Mosaic, HSV jitter).
+- **Metrics**: mAP50 = `70.1%` | Precision = `76.4%` | Recall = `66.0%`
 - **Result**: **Success**. Early stopping halted training at epoch 107 just before overfitting occurred. The strict 50% threshold completely eliminated the noisy ghost boxes, resulting in a stable, production-ready detector.
 
 ---

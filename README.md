@@ -89,6 +89,25 @@ Training configuration:
 
 ---
 
+## Model Training Evolution (The 3 Attempts) 📈
+
+Before arriving at our final production model, we went through 3 major iterations to solve specific challenges with the SH17 dataset:
+
+### 1. Attempt 1: Baseline YOLOv11n (`sh17_train`)
+- **Setup**: Initial out-of-the-box training using the Nano model.
+- **Result**: The model struggled significantly with "ghost boxes" (detecting people or helmets where there was only empty floor or machinery).
+- **Issue**: The dataset lacked enough negative examples, and the Nano model lacked the capacity for 17 complex classes.
+
+### 2. Attempt 2: Dataset Fix & Architecture Bump (`sh17_train_max_accuracy`)
+- **Setup**: We upgraded to **YOLOv11m (Medium)** and injected pure background images (negatives) into the dataset to teach the model what *not* to detect.
+- **Result**: False positives on empty backgrounds dropped to near zero. However, the model started becoming over-sensitive on actual people, producing noisy bounding boxes with low confidence scores.
+
+### 3. Attempt 3: Final Tuning & Regularization (`sh17_train_fixed2` - Deployed)
+- **Setup**: We kept YOLOv11m but added strict **Early Stopping** (patience=30), refined the confidence threshold to exactly **50%** in the inference script, and utilized advanced data augmentations (Mosaic, HSV jitter).
+- **Result**: **Success**. Early stopping halted training at epoch 107 just before overfitting occurred. The strict 50% threshold completely eliminated the noisy ghost boxes, resulting in a stable, production-ready detector.
+
+---
+
 ## ML Technical Report 📊
 
 ### Final Training Metrics

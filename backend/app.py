@@ -7,6 +7,7 @@ import time
 import requests
 import base64
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -16,8 +17,8 @@ CORS(app)
 # Use localhost for local testing via start_app.bat, or the Azure URL for cloud deployment.
 # Local: http://localhost:5005/api/camera/upload
 # Cloud: https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload
-import os
 API_URL = os.getenv("API_URL", "http://localhost:5005/api/camera/upload")
+# TODO: SECURITY RISK - Move this to an environment variable (.env) before production
 MY_SECRET = "YourSuperSecretKey123"
 CAMERA_SOURCE = "" # Leave empty (0) for default webcam, or put an IP camera URL here
 
@@ -86,7 +87,8 @@ def get_status():
 @app.route('/api/camera/toggle', methods=['POST'])
 def toggle_camera():
     from flask import request
-    action = request.json.get("action", "start")
+    req_data = request.get_json(silent=True) or {}
+    action = req_data.get("action", "start")
     if action == "stop":
         camera.stop()
     else:

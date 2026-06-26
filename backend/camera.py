@@ -70,10 +70,6 @@ class VideoCamera:
             return np.zeros((480, 640, 3), dtype=np.uint8)
         
         return frame
-        
-        # Resize for performance and standard UI size if needed
-        # frame = cv2.resize(frame, (640, 480))
-        return frame
 
     def get_jpg_bytes(self, frame):
         """Convert a frame to jpg bytes for streaming"""

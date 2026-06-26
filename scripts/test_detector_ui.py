@@ -3,6 +3,7 @@ import sys
 import cv2
 import base64
 import numpy as np
+import time
 from flask import Flask, render_template_string, request, jsonify, Response
 
 # Add root folder to path to import detector safely
@@ -13,44 +14,20 @@ sys.path.append(root_dir)
 # Try loading detector
 try:
     from backend.detector import PPE_Detector
+    from backend.camera import VideoCamera
     # Check both root and backend folders for best.pt
     best_path = os.path.join(root_dir, "best.pt")
     if not os.path.exists(best_path):
         best_path = os.path.join(root_dir, "backend", "best.pt")
     detector = PPE_Detector(model_path=best_path)
 except Exception as e:
-    print(f"Error loading detector: {e}")
+    print(f"Error loading detector or camera: {e}")
     detector = None
 
 app = Flask(__name__)
 
 # Standalone Webcam handler
-class StandaloneCamera:
-    def __init__(self):
-        self.video = None
-        self.is_running = False
-
-    def start(self):
-        if not self.is_running:
-            self.video = cv2.VideoCapture(0)
-            self.is_running = True
-
-    def stop(self):
-        if self.is_running:
-            self.is_running = False
-            if self.video:
-                self.video.release()
-            self.video = None
-
-    def get_frame(self):
-        if not self.is_running or self.video is None:
-            return None
-        success, image = self.video.read()
-        if not success:
-            return None
-        return image
-
-camera = StandaloneCamera()
+camera = VideoCamera()
 
 # Beautiful single-page dashboard HTML
 HTML_TEMPLATE = """

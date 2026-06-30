@@ -28,19 +28,41 @@ public class MqttService : BackgroundService
         _configuration = configuration;
     }
 
+    // ==========================================
+    // NEW METHOD: Sends the request to the ESP32
+    // ==========================================
+    public async Task RequestWeightAsync()
+    {
+        if (_mqttClient != null && _mqttClient.IsConnected)
+        {
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic("factory/commands")
+                .WithPayload("GET_WEIGHT") // This must match the ESP32 exactly
+                .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                .Build();
+
+            await _mqttClient.PublishAsync(message);
+            _logger.LogInformation("Sent GET_WEIGHT command to ESP32.");
+        }
+        else
+        {
+            _logger.LogWarning("Cannot request weight: MQTT Client is not connected.");
+        }
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var options = new MqttClientOptionsBuilder()
-    .WithTcpServer("158d9042fc2542248a400b91e6b8c138.s1.eu.hivemq.cloud", 8883)
-    .WithCredentials("iotuser", "12345678Me")
-    .WithTlsOptions(o =>
-    {
-        o.UseTls();
-        // HiveMQ Cloud uses public CA certificates, so this is required:
-        o.WithSslProtocols(System.Security.Authentication.SslProtocols.Tls12);
-    })
-    .WithCleanSession()
-    .Build();
+            .WithTcpServer("158d9042fc2542248a400b91e6b8c138.s1.eu.hivemq.cloud", 8883)
+            .WithCredentials("iotuser", "12345678Me")
+            .WithTlsOptions(o =>
+            {
+                o.UseTls();
+                // HiveMQ Cloud uses public CA certificates, so this is required:
+                o.WithSslProtocols(System.Security.Authentication.SslProtocols.Tls12);
+            })
+            .WithCleanSession()
+            .Build();
 
         _mqttClient.ApplicationMessageReceivedAsync += HandleMessageAsync;
 
@@ -79,7 +101,6 @@ public class MqttService : BackgroundService
         try
         {
             // 1. Parse the JSON from the ESP32
-            // We use JsonDocument to handle the dynamic nature of the payload
             using var doc = JsonDocument.Parse(payload);
             var root = doc.RootElement;
 
@@ -93,15 +114,25 @@ public class MqttService : BackgroundService
             if (root.TryGetProperty("weight", out var weight))
                 await _hubContext.Clients.All.SendAsync("ReceiveWeightUpdate", weight.GetDouble());
 
+            // ==========================================
+            // UPDATED: Handle QR Code and Request Weight
+            // ==========================================
             if (root.TryGetProperty("qr", out var qr))
-                await _hubContext.Clients.All.SendAsync("ReceiveProductNumberUpdate", qr.GetString());
+            {
+                string qrValue = qr.GetString();
+                
+                // Send the QR code to the frontend
+                await _hubContext.Clients.All.SendAsync("ReceiveProductNumberUpdate", qrValue);
+                
+                // Trigger the weight request to the ESP32 automatically
+                _logger.LogInformation($"QR Code received: {qrValue}. Automatically requesting weight...");
+                await RequestWeightAsync(); 
+            }
 
             if (root.TryGetProperty("gas_alarm", out var gas))
                 await _hubContext.Clients.All.SendAsync("ReceiveSmokeUpdate", gas.GetBoolean());
 
             // 3. Update the Stats (Total People / Violations)
-            // Since the ESP32 doesn't know about people, we usually get this from the Python Bridge,
-            // but we can send a "Status Update" here to keep the dashboard alive.
             await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate", new
             {
                 total_people = 0, // This will be updated by your CameraController
@@ -120,7 +151,7 @@ public class MqttService : BackgroundService
             _logger.LogError($"Error parsing MQTT JSON: {ex.Message}");
         }
 
-        // 4. SAVE to MySQL (Optional - keep your existing scope logic)
+        // 5. SAVE to MySQL (Optional - keep your existing scope logic)
         using (var scope = _scopeFactory.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

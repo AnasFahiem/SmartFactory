@@ -42,26 +42,33 @@ def train_model():
     print("Starting training on the SH17 dataset (17 PPE classes, 8,099 images)...")
     print("─" * 60)
 
-    # Set environment variable to prevent memory fragmentation on Windows 8GB GPUs
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    # Set environment variable to prevent memory fragmentation on Windows 8GB GPUs (commented out to prevent CUDA hangs)
+    # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
     # ─── TRAIN ────────────────────────────────────────────────────────────────
     # Corrected Settings for RTX 3070 Ti (8GB VRAM):
     #   - imgsz=800  : A perfect sweet spot. 1024 forced the batch size too low.
-    #   - batch=8    : MUST be >= 4. A batch size of 1 breaks Batch Normalization!
+    #   - batch=4    : Set to 4 to prevent VRAM paging/swapping with other open Windows apps.
     #   - optimizer='auto' : Defaults back to SGD with Momentum (more stable than AdamW for YOLO)
-    #   - mixup/copy_paste : Removed (was causing underfitting)
+    #   - mixup/copy_paste : Enabled at soft rates (0.05) to help generalize without underfitting
+    #   - cos_lr=True : Enable cosine learning rate decay
+    #   - cls=1.0 : Increased classification loss weight to address class imbalance & low-recall classes
     results = model.train(
         data=yaml_path,
         epochs=150,
         imgsz=800,           # Reduced from 1024 to allow a healthy batch size
-        batch=8,             # Hardcoded to 8 (AutoBatch picking 1 ruined the accuracy)
+        batch=4,             # Set to 4 to avoid VRAM paging on 8GB GPU
         device=device,
         amp=True,
         patience=30,
         plots=True,
         verbose=True,
         optimizer='auto',    # Revert to standard SGD
+        cos_lr=True,         # Enable cosine LR scheduler
+        mixup=0.05,          # Soft mixup augmentation
+        copy_paste=0.05,     # Soft copy-paste augmentation
+        cls=1.0,             # Focus more on correct class identification (imbalance/recall helper)
+        workers=2,           # Set workers to 2 to enable parallel batch loading now that VRAM is safe
         project=os.path.join(script_dir, "runs", "detect"),
         name="sh17_train_fixed",  
     )

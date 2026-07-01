@@ -42,7 +42,7 @@ class PPE_Detector:
             return frame, {"total_people": 0, "violations": 0}
         # -----------------------------
 
-        results = self.model(frame, verbose=False, conf=0.50)
+        results = self.model(frame, verbose=False, conf=0.30)
         result = results[0]
 
         # Draw detections on a copy to prevent double drawing
@@ -77,7 +77,7 @@ class PPE_Detector:
             
             # Confidence filtering:
             # Require 50% confidence for all classes to avoid floating ghost boxes
-            if conf < 0.50:
+            if conf < 0.30:
                 continue
                 
             detections.append({

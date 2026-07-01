@@ -428,5 +428,19 @@ SmartFactory/
 └── start_app.bat      # One-click launcher (Windows)
 ```
 
+## Future Improvements / Next Steps 🚀
+
+To further improve the system's compliance monitoring accuracy, the following development path is recommended:
+
+1. **Targeted Data Gathering for Weak Classes**:
+   * Gather more annotations specifically for **Gloves (Class 9)**, **White Helmets (Class 10)**, and **Safety Suits (Class 15)**.
+   * Merging can be achieved via Roboflow's web interface or a Python script to remap external dataset class IDs (e.g. mapping `gloves` $\rightarrow$ `9`).
+2. **Hyperparameter Evolution**:
+   * Run genetic hyperparameter tuning (`model.tune()`) using the Ultralytics API to automatically optimize optimizer weights, learning rate steps, and augmentation coefficients.
+3. **Environment Hard Negatives**:
+   * Log any false-positive detections during live feeds (e.g. background textures detected as helmets) and add those background images to the training set with empty label files to teach the model to ignore them.
+
+---
+
 ## License
 MIT

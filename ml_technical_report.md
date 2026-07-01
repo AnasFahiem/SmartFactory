@@ -188,3 +188,24 @@ In addition to computer vision PPE checks, the SmartFactory uses an environmenta
 
 5. **Cloud Deployment (Keep-Alive Web Server)**:
    For cloud deployment on hosting services like Render.com, a dummy web server runs in a background thread on port `8080`. This intercepts HTTP ping requests, preventing the free-tier service from falling asleep due to inactivity while the main thread runs the MQTT subscriber loop forever.
+
+---
+---
+
+## 3. Next Steps & Future Recommendations 🚀
+
+To push the safety monitoring system to higher levels of accuracy and recall, the following steps are recommended:
+
+### 1. Targeted Data Ingestion (Weakly Detected Classes)
+The model's current weak spots are **Gloves (Class 9)**, **White Helmets (Class 10)**, and **Safety Suits (Class 15)**.
+* **Action**: Download specific datasets (from Roboflow/Kaggle) or record custom videos of these items inside the actual factory.
+* **Data Merging**: Use a Python label remapper or Roboflow's web interface to merge the new images while mapping the external classes to the SH17 indices (Gloves $\rightarrow$ 9, Helmet $\rightarrow$ 10, Safety-suit $\rightarrow$ 15).
+* **Label Completeness**: Ensure all new images contain annotations for all visible objects (e.g., if a person is wearing a helmet and gloves, both must be labeled) to prevent the model from learning to ignore other PPE.
+
+### 2. Hyperparameter Evolution & Scaling
+* **Scale Model Size**: If more VRAM is available (e.g., training on a cloud GPU or closing background apps), scale back up to `yolo11l.pt` (Large model) at `imgsz=1024` to improve detail resolution.
+* **Hyperparameter Tuning**: Use Ultralytics' built-in genetic algorithm tuner (`model.tune()`) on your specific dataset for 30–50 iterations to optimize the weights of augmentations (`mixup`, `copy_paste`) and learning rate decay parameters automatically.
+
+### 3. Edge Hard Negative Collection
+* Review false-positive detections in the active deployment (e.g. background machinery flagged as vests or helmets).
+* Capture frames of these specific backgrounds and add them to the dataset as empty annotation background images (negatives). This will continuously lower the false-positive rate.

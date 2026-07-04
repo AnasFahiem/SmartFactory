@@ -48,3 +48,4 @@ dist/
 .github/
 specs/
 AGENTS.md
+*.xlsx

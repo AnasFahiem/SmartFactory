@@ -110,6 +110,7 @@ class PPE_Detector:
         heads = [d for d in detections if d['id'] == 12]
         helmets = [d for d in detections if d['id'] == 10]
         vests = [d for d in detections if d['id'] == 16]
+        safety_suits = [d for d in detections if d['id'] == 15]
 
         # Tracking violations
         helmet_violations = set() # indices of heads or people violating helmet rule
@@ -146,7 +147,7 @@ class PPE_Detector:
                 if not has_helmet:
                     helmet_violations.add(('person', idx))
 
-        # 3. Vest Check (On all People)
+        # 3. Vest Check (On all People - bypassed if wearing a Safety-suit)
         for idx, person in enumerate(people):
             # Check if any vest is worn by this person (vest should be mostly inside person box)
             has_vest = False
@@ -154,6 +155,14 @@ class PPE_Detector:
                 if get_ioa(vest['box'], person['box']) >= 0.50:
                     has_vest = True
                     break
+            
+            # If no vest, check if they are wearing a safety suit (suit should be mostly inside person box)
+            if not has_vest:
+                for suit in safety_suits:
+                    if get_ioa(suit['box'], person['box']) >= 0.50:
+                        has_vest = True
+                        break
+                        
             if not has_vest:
                 vest_violations.add(idx)
 

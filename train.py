@@ -56,8 +56,8 @@ def train_model():
     results = model.train(
         data=yaml_path,
         epochs=150,
-        imgsz=800,           # Reduced from 1024 to allow a healthy batch size
-        batch=4,             # Set to 4 to avoid VRAM paging on 8GB GPU
+        imgsz=640,           # Set to 640 to match dataset native resolution and improve speed
+        batch=8,             # Set to 8 now that imgsz is 640 (VRAM safe)
         device=device,
         amp=True,
         patience=30,

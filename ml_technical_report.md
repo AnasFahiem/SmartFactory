@@ -10,7 +10,7 @@ This technical report details the Machine Learning and Artificial Intelligence c
 
 ### Model Metadata
 * **Architecture**: YOLOv11m (Medium)
-* **Dataset**: SH17 PPE Detection (17 classes, 8,099 images)
+* **Dataset**: SH17 PPE Detection (17 classes, 17,978 images)
 * **Training Schedule**: 150 epochs maximum (patience=30 for early stopping)
 * **Training Command**: `python train.py`
 * **Inference Pipeline**: [detector.py](file:///f:/SmartFactory/backend/detector.py) (Confidence threshold: `0.40`)
@@ -44,7 +44,7 @@ Before deploying the final model, multiple iterations were developed to address 
      * **Peak Recall**: **67.64%** (Epoch 137)
      * **Peak Precision**: **81.11%** (Epoch 111)
      * **Final Epoch (148) Weights**: mAP50 = **70.18%** | Precision = **77.62%** | Recall = **65.81%** (Operational recall **~80-85%** at inference `conf=0.40`)
-   * **Outcome**: Successfully resolved Windows VRAM paging by dropping batch size to 4, decreasing training time from 58 hours to ~4.5 hours. The combination of cosine learning rate decay and doubled classification weight (`cls=1.0`) yielded a **+4.24%** increase in peak recall and **+2.91%** increase in peak precision compared to the baseline. Retained as the active deployed model weights for operational preference.
+   * **Outcome**: Successfully resolved Windows VRAM paging by dropping batch size to 4, decreasing training time from 58 hours to ~4.5 hours. The combination of cosine learning rate decay and doubled classification weight (`cls=1.0`) yielded a **+4.24%** increase in peak recall and **+2.91%** increase in peak precision compared to the baseline.
 
 5. **Attempt 5: Target Classes Enrichment & Merged Dataset (`sh17_train_fixed10`)**
    * **Parameters**: `Model: YOLOv11m` | `imgsz: 640` | `epochs: 150` | `batch: 8` | `optimizer: SGD (auto)` | `cos_lr: True` | `mixup: 0.05` | `copy_paste: 0.05` | `cls: 1.0`
@@ -53,26 +53,26 @@ Before deploying the final model, multiple iterations were developed to address 
      * **Peak mAP50**: **71.39%** (Epoch 119) - *New Record*
      * **Peak Precision**: **79.69%** (Epoch 119)
      * **Peak Recall**: **64.81%** (Epoch 119)
-   * **Outcome**: Showcased successful scaling of target categories (adding 31,666 annotations). Achieved the highest overall accuracy of all attempts (+1.02% higher mAP50 than Attempt 4). However, for operational comparison, the Attempt 4 weights remain active in production.
+   * **Outcome**: Showcased successful scaling of target categories (adding 31,666 annotations). Achieved the highest overall accuracy of all attempts (+1.02% higher mAP50 than Attempt 4) and has been successfully deployed as the active production model.
 
 ---
 
-### Model Performance & Loss Analysis (Attempt 4 - Deployed Model)
+### Model Performance & Loss Analysis (Attempt 5 - Deployed Model)
 
 #### Train vs. Validation Loss Comparison
 
 | Epoch | Train Box Loss | Val Box Loss | Gap | Train Cls Loss | Val Cls Loss | Gap |
 |---|---|---|---|---|---|---|
-| 1 | 1.1318 | 1.0646 | −0.07 | 2.5221 | 1.7772 | −0.74 |
-| 25 | 1.0549 | 1.0089 | −0.05 | 1.6484 | 1.4291 | −0.22 |
-| 50 | 0.9446 | 0.9395 | −0.01 | 1.3321 | 1.2435 | −0.09 |
-| 75 | 0.8722 | 0.9175 | +0.05 | 1.1460 | 1.1422 | −0.00 |
-| 100 | 0.7912 | 0.9117 | **+0.12** | 0.9657 | 1.1288 | **+0.16** |
-| 125 | 0.7436 | 0.9147 | **+0.17** | 0.8798 | 1.1426 | **+0.26** |
-| 148 | 0.6423 | 0.9200 | **+0.28** | 0.6426 | 1.1538 | **+0.51** |
+| 1 | 1.2762 | 1.3518 | +0.07 | 2.7512 | 1.8271 | −0.92 |
+| 25 | 1.1549 | 1.2179 | +0.06 | 1.6983 | 1.3071 | −0.39 |
+| 50 | 1.0703 | 1.1522 | +0.08 | 1.4424 | 1.1394 | −0.30 |
+| 75 | 0.9935 | 1.1417 | +0.14 | 1.2619 | 1.0909 | −0.17 |
+| 100 | 0.9153 | 1.1385 | **+0.22** | 1.0835 | 1.0809 | −0.00 |
+| 119 | 0.8620 | 1.1394 | **+0.27** | 0.9806 | 1.0846 | **+0.10** |
+| 150 | 0.7587 | 1.1429 | **+0.38** | 0.7101 | 1.1050 | **+0.39** |
 
-* **Diagnosis (Attempt 4)**: **Mild Overfitting** 🟡. The validation loss plateaus around epoch 100, while the training loss continues to fall. The gap widens in the final epochs (box gap: +0.28, cls gap: +0.51) due to the highly fine-tuned learning rate and extended training duration. However, the validation metrics remain stable.
-* **Bias-Variance Tradeoff**: **Low Bias, Moderate Variance** 🟡. The model has sufficient capacity (~20M parameters) to fit the data. The generalization gap (+0.28 box, +0.51 cls) represents normal variance for a multi-class YOLO model trained with background negative images.
+* **Diagnosis (Attempt 5)**: **Mild Overfitting** 🟡. The validation box loss bottoms out around epoch 100 and validation class loss plateaus around epoch 119. The gap widens slightly in the final epochs (box gap: +0.38, cls gap: +0.39) due to the extended training cycles over the 17,978 merged images. However, the overall peak metrics represent a new historical best.
+* **Bias-Variance Tradeoff**: **Low Bias, Moderate Variance** 🟡. The model has enormous capacity to memorize the expanded dataset. The generalization gap is perfectly normal for a complex YOLO model merging visually diverse external data (Roboflow backgrounds vs internal factory backgrounds).
 
 ---
 

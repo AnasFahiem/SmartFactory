@@ -1,0 +1,58 @@
+<div class="page-container">
+  <div class="header-section">
+    <button class="back-btn" (click)="goBack()">
+      <span class="btn-icon">⬅️</span> Back to Dashboard
+    </button>
+    <h1>My Profile</h1>
+    <p>Manage your account credentials</p>
+  </div>
+
+  <div class="content-layout">
+    <div class="form-card">
+      <div class="card-header">
+        <span class="header-icon">⚙️</span>
+        <h2>Account Settings</h2>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" #profileForm="ngForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input type="text" id="username" name="username" [(ngModel)]="newUsername" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">New Password (Optional)</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="password" name="password" [(ngModel)]="newPassword" placeholder="Leave blank to keep current password" />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="newPassword">
+          <label for="confirmPassword">Confirm New Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🛡️</span>
+            <input type="password" id="confirmPassword" name="confirmPassword" [(ngModel)]="confirmPassword" placeholder="Re-type new password" />
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="!profileForm.form.valid || isSubmitting">
+          {{ isSubmitting ? 'Updating...' : 'Save Changes' }}
+        </button>
+
+        <div class="success-message" *ngIf="successMessage">
+          <span class="success-icon">✅</span>
+          {{ successMessage }}
+        </div>
+
+        <div class="error-message" *ngIf="errorMessage">
+          <span class="error-icon">❌</span>
+          {{ errorMessage }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

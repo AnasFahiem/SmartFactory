@@ -1,0 +1,43 @@
+<div class="add-product-container">
+  <div class="header">
+    <button class="back-btn" (click)="goBack()">
+      <span class="icon">⬅</span> Back to Dashboard
+    </button>
+    <h1>Add New Product</h1>
+  </div>
+
+  <div class="form-card">
+    <div class="card-header">
+      <h2>Product Details</h2>
+      <p>Enter the specifications for the new product</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #productForm="ngForm">
+      <div class="form-group">
+        <label for="weight">Weight (g)</label>
+        <div class="input-wrapper">
+          <span class="input-icon">⚖️</span>
+          <input type="number" id="weight" name="weight" [(ngModel)]="product.weight" required placeholder="e.g. 500" step="1" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="code">Product Code</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔢</span>
+          <input type="text" id="code" name="code" [(ngModel)]="product.code" required placeholder="e.g. SP-A1-001" />
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="!productForm.form.valid">
+        <span>Add Product</span>
+        <span class="submit-icon">➕</span>
+      </button>
+
+      <div class="success-message" *ngIf="successMessage">
+        <span class="success-icon">✅</span>
+        {{ successMessage }}
+      </div>
+    </form>
+  </div>
+</div>

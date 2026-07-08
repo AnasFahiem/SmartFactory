@@ -1,0 +1,55 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="factory-icon">🏭</div>
+      <h2>Smart Factory</h2>
+      <p>Log in to access the control panel</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-container">
+          <input
+            type="text"
+            id="username"
+            name="username"
+            [(ngModel)]="username"
+            required
+            placeholder="Enter username"
+            [disabled]="loading"
+            class="form-control"
+            autocomplete="username"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-container">
+          <input
+            type="password"
+            id="password"
+            name="password"
+            [(ngModel)]="password"
+            required
+            placeholder="Enter password"
+            [disabled]="loading"
+            class="form-control"
+            autocomplete="current-password"
+          />
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-message">
+        <span class="error-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <button type="submit" class="submit-btn" [disabled]="loading">
+        <span *ngIf="!loading">Sign In</span>
+        <span *ngIf="loading" class="spinner"></span>
+      </button>
+    </form>
+  </div>
+</div>

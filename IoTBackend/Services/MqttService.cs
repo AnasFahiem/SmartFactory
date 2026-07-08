@@ -17,6 +17,12 @@ public class MqttService : BackgroundService
     private readonly ILogger<MqttService> _logger;
     private readonly IConfiguration _configuration;
 
+    // ==========================================
+    // NEW: Token to control the 1-second retry loop
+    // ==========================================
+    private CancellationTokenSource? _weightRequestCts;
+    private string? _lastReceivedQr;
+
     public MqttService(IMqttClient mqttClient, IHubContext<FactoryHub> hubContext,
                        IServiceScopeFactory scopeFactory, ILogger<MqttService> logger,
                        IConfiguration configuration)
@@ -28,16 +34,13 @@ public class MqttService : BackgroundService
         _configuration = configuration;
     }
 
-    // ==========================================
-    // NEW METHOD: Sends the request to the ESP32
-    // ==========================================
     public async Task RequestWeightAsync()
     {
         if (_mqttClient != null && _mqttClient.IsConnected)
         {
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic("factory/commands")
-                .WithPayload("GET_WEIGHT") // This must match the ESP32 exactly
+                .WithPayload("GET_WEIGHT") 
                 .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
                 .Build();
 
@@ -58,7 +61,6 @@ public class MqttService : BackgroundService
             .WithTlsOptions(o =>
             {
                 o.UseTls();
-                // HiveMQ Cloud uses public CA certificates, so this is required:
                 o.WithSslProtocols(System.Security.Authentication.SslProtocols.Tls12);
             })
             .WithCleanSession()
@@ -66,7 +68,6 @@ public class MqttService : BackgroundService
 
         _mqttClient.ApplicationMessageReceivedAsync += HandleMessageAsync;
 
-        // Run connection logic in a separate task so it doesn't block Web App startup
         _ = Task.Run(async () =>
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -76,7 +77,7 @@ public class MqttService : BackgroundService
                     if (!_mqttClient.IsConnected)
                     {
                         await _mqttClient.ConnectAsync(options, stoppingToken);
-                        await _mqttClient.SubscribeAsync("factory/#"); // Subscribe to all factory topics
+                        await _mqttClient.SubscribeAsync("factory/#"); 
                         _logger.LogInformation("MQTT Connected and Subscribed.");
                     }
                 }
@@ -84,7 +85,7 @@ public class MqttService : BackgroundService
                 {
                     _logger.LogError($"MQTT Connection failed: {ex.Message}");
                 }
-                await Task.Delay(5000, stoppingToken); // Check connection every 5s
+                await Task.Delay(5000, stoppingToken); 
             }
         }, stoppingToken);
 
@@ -100,46 +101,110 @@ public class MqttService : BackgroundService
 
         try
         {
-            // 1. Parse the JSON from the ESP32
             using var doc = JsonDocument.Parse(payload);
             var root = doc.RootElement;
 
-            // 2. Broadcast specific values to the SignalR listeners in Angular
             if (root.TryGetProperty("temperature", out var temp))
                 await _hubContext.Clients.All.SendAsync("ReceiveTemperatureUpdate", temp.GetDouble());
 
             if (root.TryGetProperty("humidity", out var hum))
                 await _hubContext.Clients.All.SendAsync("ReceiveHumidityUpdate", hum.GetDouble());
 
+            // ==========================================
+            // UPDATED: Stop the loop when weight arrives
+            // ==========================================
             if (root.TryGetProperty("weight", out var weight))
-                await _hubContext.Clients.All.SendAsync("ReceiveWeightUpdate", weight.GetDouble());
+            {
+                // Stop the 1-second retry loop
+                _weightRequestCts?.Cancel(); 
+                _logger.LogInformation("Weight received! Stopped sending requests.");
+
+                double actualWeight = weight.GetDouble();
+                await _hubContext.Clients.All.SendAsync("ReceiveWeightUpdate", actualWeight);
+
+                if (!string.IsNullOrEmpty(_lastReceivedQr))
+                {
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                        var product = dbContext.Products.FirstOrDefault(p => p.ProductNumber == _lastReceivedQr);
+                        if (product != null)
+                        {
+                            dbContext.ProductScans.Add(new ProductScan
+                            {
+                                ProductNumber = _lastReceivedQr,
+                                ActualWeight = (decimal)actualWeight,
+                                ScanTime = DateTime.UtcNow
+                            });
+                            await dbContext.SaveChangesAsync();
+                            _logger.LogInformation($"Saved actual weight {actualWeight} for product {_lastReceivedQr}");
+
+                            if (product.Weight.HasValue)
+                            {
+                                decimal idealWeight = product.Weight.Value;
+                                decimal tenPercent = idealWeight * 0.10m;
+                                bool isWithin10Percent = Math.Abs((decimal)actualWeight - idealWeight) <= tenPercent;
+                                
+                                string commandPayload = isWithin10Percent ? "true" : "false";
+                                var msg = new MqttApplicationMessageBuilder()
+                                    .WithTopic("factory/commands")
+                                    .WithPayload(commandPayload)
+                                    .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                                    .Build();
+
+                                await _mqttClient.PublishAsync(msg);
+                                _logger.LogInformation($"Published {commandPayload} to factory/commands for product {_lastReceivedQr}");
+                            }
+                        }
+                    }
+                }
+            }
 
             // ==========================================
-            // UPDATED: Handle QR Code and Request Weight
+            // UPDATED: Start the loop when QR arrives
             // ==========================================
             if (root.TryGetProperty("qr", out var qr))
             {
                 string qrValue = qr.GetString();
+                _lastReceivedQr = qrValue;
                 
-                // Send the QR code to the frontend
                 await _hubContext.Clients.All.SendAsync("ReceiveProductNumberUpdate", qrValue);
                 
-                // Trigger the weight request to the ESP32 automatically
-                _logger.LogInformation($"QR Code received: {qrValue}. Automatically requesting weight...");
-                await RequestWeightAsync(); 
+                _logger.LogInformation($"QR Code received: {qrValue}. Starting 1-second weight request loop...");
+
+                // Cancel any old loop just in case one is still running
+                _weightRequestCts?.Cancel();
+                _weightRequestCts = new CancellationTokenSource();
+                
+                var token = _weightRequestCts.Token;
+
+                // Start a background loop that fires every 1 second
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        while (!token.IsCancellationRequested)
+                        {
+                            await RequestWeightAsync();
+                            await Task.Delay(6000, token); // Wait exactly 1 second before looping
+                        }
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Safely catches the cancellation when the loop stops
+                    }
+                }, token);
             }
 
             if (root.TryGetProperty("gas_alarm", out var gas))
                 await _hubContext.Clients.All.SendAsync("ReceiveSmokeUpdate", gas.GetBoolean());
 
-            // 3. Update the Stats (Total People / Violations)
             await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate", new
             {
-                total_people = 0, // This will be updated by your CameraController
+                total_people = 0, 
                 violations = 0
             });
 
-            // 4. Handle AI Alert from Python Monitor
             if (root.TryGetProperty("ai_alert", out var aiAlert) && aiAlert.GetBoolean())
             {
                 string msgText = root.TryGetProperty("message", out var msgNode) ? msgNode.GetString() : "AI Anomaly Detected!";
@@ -151,7 +216,6 @@ public class MqttService : BackgroundService
             _logger.LogError($"Error parsing MQTT JSON: {ex.Message}");
         }
 
-        // 5. SAVE to MySQL (Optional - keep your existing scope logic)
         using (var scope = _scopeFactory.CreateScope())
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

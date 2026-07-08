@@ -27,14 +27,14 @@ namespace IoTBackend.Controllers
                 return Unauthorized();
 
             await _hubContext.Clients.All.SendAsync("ReceiveCameraFrame", request.Image);
-            
+
             // Broadcast the AI stats to the Angular frontend
-            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate", new 
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate", new
             {
                 total_people = request.TotalPeople,
                 violations = request.Violations
             });
-            
+
             return Ok();
         }
 

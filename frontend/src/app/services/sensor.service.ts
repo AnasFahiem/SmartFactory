@@ -103,4 +103,24 @@ export class SensorService {
     toggleCamera(action: string): Observable<any> {
         return this.http.post(`${this.apiUrl}/api/camera/toggle`, { action });
     }
+
+    addProduct(product: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/api/products`, product);
+    }
+
+    getProductAnalytics(productNumber: string): Observable<any> {
+        return this.http.get(`${this.apiUrl}/api/products/analytics/${productNumber}`);
+    }
+
+    getAllProducts(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/api/products`);
+    }
+
+    updateProduct(id: number, product: any): Observable<any> {
+        return this.http.put(`${this.apiUrl}/api/products/${id}`, product);
+    }
+
+    deleteProduct(id: number): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/api/products/${id}`);
+    }
 }

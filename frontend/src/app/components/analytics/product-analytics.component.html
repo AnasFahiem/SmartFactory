@@ -1,0 +1,72 @@
+<div class="page-container">
+  <div class="header-section">
+    <button class="back-btn" (click)="goBack()">
+      <span class="btn-icon">⬅️</span> Back to Dashboard
+    </button>
+    <h1>Product Analytics</h1>
+    <p>Performance and variance tracking for Product <strong>{{ productNumber }}</strong></p>
+  </div>
+
+  <div class="content-layout">
+    
+    <div class="loading-state" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Loading analytics data...</p>
+    </div>
+
+    <div class="error-message" *ngIf="error && !loading">
+      <span class="error-icon">❌</span>
+      {{ error }}
+    </div>
+
+    <div class="analytics-card" *ngIf="!loading && analyticsData">
+      
+      <div class="card-header">
+        <span class="header-icon">📊</span>
+        <h2>Weight Analysis</h2>
+      </div>
+
+      <div class="stats-grid">
+        
+        <div class="stat-box">
+          <div class="stat-label">Ideal Weight</div>
+          <div class="stat-value">
+            {{ analyticsData.idealWeight !== null ? analyticsData.idealWeight + ' g' : 'Not Set' }}
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">Average Actual Weight</div>
+          <div class="stat-value" [ngClass]="{'has-data': analyticsData.totalScans > 0}">
+            {{ analyticsData.totalScans > 0 ? (analyticsData.averageActualWeight | number:'1.2-2') + ' g' : 'No Scans' }}
+          </div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">Total Scans</div>
+          <div class="stat-value info">{{ analyticsData.totalScans }}</div>
+        </div>
+
+        <div class="stat-box variance-box" [ngClass]="{
+            'variance-good': isVarianceGood() && analyticsData.totalScans > 0,
+            'variance-bad': !isVarianceGood() && analyticsData.totalScans > 0
+          }">
+          <div class="stat-label">Variance (Average - Ideal)</div>
+          <div class="stat-value">
+            <ng-container *ngIf="analyticsData.totalScans > 0 && analyticsData.idealWeight !== null">
+               {{ analyticsData.variance > 0 ? '+' : '' }}{{ analyticsData.variance | number:'1.2-2' }} g
+            </ng-container>
+            <ng-container *ngIf="analyticsData.totalScans === 0 || analyticsData.idealWeight === null">
+               ---
+            </ng-container>
+          </div>
+          <div class="variance-status" *ngIf="analyticsData.totalScans > 0 && analyticsData.idealWeight !== null">
+            {{ isVarianceGood() ? '✅ Within acceptable range (10%)' : '⚠️ Warning: High Variance (>10%)' }}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

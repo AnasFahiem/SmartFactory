@@ -1,0 +1,110 @@
+<div class="page-container">
+  <div class="header-section">
+    <button class="back-btn" (click)="goBack()">
+      <span class="btn-icon">⬅️</span> Back to Dashboard
+    </button>
+    <h1>User Management</h1>
+    <p>Manage system access, roles, and create new users.</p>
+  </div>
+
+  <div class="content-layout">
+    <!-- Left column: Add User Form -->
+    <div class="form-card">
+      <div class="card-header">
+        <span class="header-icon">👤</span>
+        <h2>Create New User</h2>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" #userForm="ngForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🆔</span>
+            <input type="text" id="username" name="username" [(ngModel)]="newUser.username" required placeholder="e.g. jdoe123" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-wrapper">
+            <span class="input-icon">📧</span>
+            <input type="email" id="email" name="email" [(ngModel)]="newUser.email" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="password" name="password" [(ngModel)]="newUser.password" required placeholder="Secure password" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="role">User Role</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🛡️</span>
+            <select id="role" name="role" [(ngModel)]="newUser.role" required>
+              <option value="User">User</option>
+              <option value="Manager">Manager</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" [disabled]="!userForm.form.valid">
+          Create Account
+        </button>
+
+        <div class="success-message" *ngIf="successMessage">
+          <span class="success-icon">✅</span>
+          {{ successMessage }}
+        </div>
+
+        <div class="error-message" *ngIf="errorMessage">
+          <span class="error-icon">❌</span>
+          {{ errorMessage }}
+        </div>
+      </form>
+    </div>
+
+    <!-- Right column: Users List -->
+    <div class="users-list-card">
+      <div class="card-header">
+        <span class="header-icon">👥</span>
+        <h2>Active Users</h2>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>#{{ u.id }}</td>
+              <td><strong>{{ u.username }}</strong></td>
+              <td>
+                <select class="role-select" [ngModel]="u.role" (ngModelChange)="updateRole(u.id, $event)">
+                  <option value="User">User</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </td>
+              <td>
+                <button class="delete-btn" (click)="deleteUser(u.id, u.username)" [disabled]="u.username.toLowerCase() === 'admin'">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

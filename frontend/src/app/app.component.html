@@ -1,9 +1,11 @@
 <div class="app-container">
-    <nav class="main-nav">
+    <nav class="main-nav" *ngIf="authService.isLoggedIn()">
         <div class="nav-brand">🏭 Smart Factory</div>
         <div class="nav-links">
             <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
             <a routerLink="/stream" routerLinkActive="active">Live Stream</a>
+            <a routerLink="/profile" routerLinkActive="active">My Profile</a>
+            <a (click)="authService.logout()" href="javascript:void(0)" style="cursor: pointer;">Logout</a>
         </div>
     </nav>
 

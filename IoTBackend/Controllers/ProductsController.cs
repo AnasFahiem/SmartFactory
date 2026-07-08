@@ -118,16 +118,10 @@ namespace IoTBackend.Controllers
             if (product == null)
                 return NotFound(new { message = "Product not found." });
 
-            var scans = _dbContext.ProductScans.Where(s => s.ProductNumber == product.ProductNumber).ToList();
-            if (scans.Any())
-            {
-                _dbContext.ProductScans.RemoveRange(scans);
-            }
-
             _dbContext.Products.Remove(product);
             await _dbContext.SaveChangesAsync();
 
-            return Ok(new { message = "Product and all associated scans deleted successfully." });
+            return Ok(new { message = "Product deleted successfully." });
         }
     }
 }

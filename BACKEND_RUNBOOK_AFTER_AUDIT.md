@@ -1,60 +1,72 @@
-# Backend And Deployment Runbook After Audit
+# دليل تشغيل الباك إند والنشر بعد الأودت
 
-Last updated: 2026-07-08
+آخر تحديث: 2026-07-08
 
-This file is for the backend / operations owner who will run the project locally or deploy it after the audit fixes.
+الملف ده معمول للشخص المسؤول عن الباك إند وتشغيل الموقع، سواء هيشغله لوكال أو هيعمله deploy على Azure بعد تعديلات الأودت.
 
-## What Changed
+## إيه اللي اتغير؟
 
-The audit changes focused on making local/cloud configuration predictable, fixing QR-to-frontend delivery, hardening auth, and reducing data integrity risks.
+تعديلات الأودت كانت مركزة على إن إعدادات اللوكال والكلاود تبقى واضحة، وإن بيانات الـ QR تظهر في الفرونت، وإن الـ auth يبقى أأمن، وإن بيانات المنتجات والسكانات تبقى أسهل في التتبع.
 
-Main affected areas:
+أهم الحاجات اللي اتغيرت:
 
-- ASP.NET backend now defaults locally to port `5005` when Azure does not provide `PORT`.
-- Angular services now read backend URLs from Angular environment files instead of hardcoded Azure URLs.
-- Python camera backend now reads API URL, camera secret, and source from environment variables / `.env`.
-- MQTT broker settings are no longer hardcoded in the service. They come from .NET configuration.
-- MQTT QR/product payload parsing is more flexible and forwards product numbers to SignalR clients.
-- MQTT sensor messages no longer reset camera stats to zero.
-- Auth sessions now expire, and `/api/auth/me` / `/api/auth/logout` were added.
-- Default admin seeding no longer uses a public hardcoded password. It requires configuration.
-- Product creation/update now rejects duplicate product codes and invalid negative weights.
-- Product create/update/delete now require `Manager` or `Admin`.
-- `/health` and `/health/live` are liveness checks. `/health/ready` checks database readiness.
-- `appsettings.json` is sanitized. Real secrets must be supplied through environment variables, user-secrets, Azure App Settings, or a secure secret store.
+- الـ ASP.NET backend بقى يشتغل لوكال على port `5005` لو Azure مبعتش `PORT`.
+- خدمات Angular بقت تقرأ روابط الباك إند من environment files بدل hardcoded Azure URLs.
+- Python camera backend بقى يقرأ API URL والـ camera secret والـ camera source من environment variables أو `.env`.
+- إعدادات MQTT مبقتش hardcoded جوه service. بقت من .NET configuration.
+- قراءة QR/product من MQTT بقت أوسع وبتقبل payloads بأشكال أكتر.
+- أي QR/product update بيتبعت للفرونت عن طريق SignalR.
+- رسائل MQTT مبقتش تصفر camera stats بالغلط.
+- الـ auth sessions بقى ليها expiry، واتضاف `/api/auth/me` و`/api/auth/logout`.
+- default admin مبقاش بيتعمل بكلمة سر public hardcoded. لازم يتظبط من configuration.
+- إنشاء أو تعديل المنتجات بقى يمنع product codes المكررة والوزن السالب.
+- add/update/delete للمنتجات مسموح لـ `Manager` أو `Admin` فقط.
+- صفحة analytics بقت تعرض كل scan لوحدها مع المتوسط العام.
+- اتضاف reset لسكانات منتج معين بدون حذف المنتج.
+- `/health` و`/health/live` بقوا liveness checks، و`/health/ready` بيفحص جاهزية قاعدة البيانات.
+- `appsettings.json` اتنضف من الأسرار. أي secrets حقيقية لازم تتحط في environment variables أو Azure App Settings أو secret store.
 
-## Important Runtime Impact
+## تأثير التعديلات على التشغيل
 
-The backend can fail or partially disable services if required configuration is missing:
+في شوية إعدادات لازم تبقى موجودة، وإلا الباك إند ممكن يفشل أو يشغل جزء ويعطل جزء:
 
-- `ConnectionStrings:DefaultConnection` is required. The .NET API will not start without it.
-- `Camera:SecretKey` or `CAMERA_SECRET` is required outside `Development`.
-- `Mqtt:Host` is optional for local/dev. If empty, MQTT is disabled with a warning instead of crashing the app.
-- `DefaultAdmin:Username` and `DefaultAdmin:Password` are optional. If missing, admin seeding is skipped.
-- The product-code unique index is defined in the EF model, but a migration still needs to be generated/applied before it is enforced in the database.
+- `ConnectionStrings:DefaultConnection` إجباري. من غيره .NET API مش هيبدأ.
+- `Camera:SecretKey` أو `CAMERA_SECRET` إجباري خارج `Development`.
+- `Mqtt:Host` اختياري في اللوكال. لو فاضي، MQTT هيتعطل برسالة warning بدل ما يوقع التطبيق كله.
+- `DefaultAdmin:Username` و`DefaultAdmin:Password` اختياريين. لو مش موجودين، إنشاء admin افتراضي هيتعمله skip.
+- unique index بتاع `Product.ProductNumber` متعرف في EF model، لكن محتاج migration تتعمل وتتطبق على قاعدة البيانات عشان يتفعل فعليا.
 
-## Required Local Tooling
+## الأدوات المطلوبة لوكال
 
-Install these before validating the full stack:
+قبل ما تعمل validation كامل للسيستم، اتأكد إن دول موجودين:
 
 - `.NET 8 SDK`
-- Node.js LTS and npm
-- Python 3.10 or 3.11 recommended for ML compatibility
-- MySQL-compatible database reachable by the .NET backend
+- Node.js LTS و npm
+- Python 3.10 أو 3.11 أفضل للـ ML compatibility
+- MySQL-compatible database والـ .NET backend يقدر يوصلها
 
-Check the .NET SDK:
+اتأكد من .NET SDK:
 
 ```powershell
 dotnet --list-sdks
 ```
 
-## Backend Configuration
+## إعدادات الباك إند
 
-Use `IoTBackend/appsettings.Development.example.json` as a template for local backend settings.
+استخدم الملف ده كـ template لإعدادات اللوكال:
 
-Do not commit real credentials. Prefer `appsettings.Development.json`, .NET user-secrets, or real environment variables.
+```text
+IoTBackend/appsettings.Development.example.json
+```
 
-Important .NET configuration keys:
+متحطش credentials حقيقية في git. الأفضل تستخدم:
+
+- `appsettings.Development.json`
+- .NET user-secrets
+- environment variables
+- Azure App Settings
+
+أهم .NET configuration keys:
 
 ```text
 ConnectionStrings__DefaultConnection
@@ -75,7 +87,7 @@ Mqtt__Password
 Mqtt__Topics__0
 ```
 
-Example local values:
+مثال قيم لوكال:
 
 ```powershell
 $env:ConnectionStrings__DefaultConnection="Server=localhost;Database=IotDb;User=root;Password=YOUR_LOCAL_PASSWORD;"
@@ -92,11 +104,11 @@ $env:Mqtt__Password="YOUR_MQTT_PASSWORD"
 $env:Mqtt__Topics__0="factory/#"
 ```
 
-## Python Camera Configuration
+## إعدادات Python Camera
 
-The Python camera backend reads `.env` from the project root.
+Python camera backend بيقرأ `.env` من root بتاع المشروع.
 
-Use `.env.example` as a template:
+استخدم `.env.example` كـ template:
 
 ```text
 API_URL=http://localhost:5005/api/camera/upload
@@ -104,33 +116,46 @@ CAMERA_SECRET=CHANGE_THIS_CAMERA_SECRET
 CAMERA_SOURCE=0
 ```
 
-`CAMERA_SECRET` must match the .NET backend `Camera:SecretKey`.
+مهم جدا:
 
-If these do not match, the Python backend may send frames successfully from its side, but the .NET backend will reject them with `401 Unauthorized`.
+`CAMERA_SECRET` لازم يساوي نفس قيمة .NET backend `Camera:SecretKey`.
 
-## Frontend Configuration
+لو القيمتين مختلفين، Python ممكن يبعت frames عادي من ناحيته، لكن .NET backend هيرفضها بـ `401 Unauthorized`.
 
-Local Angular dev should call the local .NET backend:
+## إعدادات الفرونت
+
+في اللوكال، Angular لازم يكلم .NET backend المحلي:
 
 ```ts
 apiUrl: 'http://localhost:5005'
 hubUrl: 'http://localhost:5005/hubs/factory'
 ```
 
-This is currently set in:
+ده موجود هنا:
 
 ```text
 frontend/src/environments/environment.development.ts
 ```
 
-For production, make sure the Angular production environment points to the deployed .NET backend and SignalR hub.
+في production، Angular بيستخدم:
 
-## Local Run Order
+```text
+frontend/src/environments/environment.ts
+```
 
-Start the system in this order when testing integration:
+اتأكد إن الملف ده شااور على Azure backend الصحيح والـ SignalR hub الصحيح قبل ما تعمل build وتنشر.
 
-1. Start MySQL and confirm the connection string works.
-2. Start the .NET backend:
+ملاحظة مهمة:
+
+- `npm run build` بيستخدم production config وAzure URL.
+- `ng serve` أو development build بيستخدم `environment.development.ts` وlocalhost.
+
+## ترتيب التشغيل لوكال
+
+لما تحب تختبر integration كامل، شغل بالترتيب ده:
+
+1. شغل MySQL واتأكد إن connection string شغال.
+2. شغل .NET backend:
 
 ```powershell
 dotnet restore IoTBackend\IoTBackend.csproj
@@ -138,7 +163,7 @@ dotnet build IoTBackend\IoTBackend.csproj
 dotnet run --project IoTBackend\IoTBackend.csproj
 ```
 
-3. Confirm backend health:
+3. اتأكد من health endpoints:
 
 ```text
 http://localhost:5005/health
@@ -146,7 +171,7 @@ http://localhost:5005/health/live
 http://localhost:5005/health/ready
 ```
 
-4. Start Angular:
+4. شغل Angular:
 
 ```powershell
 cd frontend
@@ -154,47 +179,53 @@ npm install
 npm run start
 ```
 
-5. Start Python camera backend:
+5. شغل Python camera backend:
 
 ```powershell
 python backend\app.py
 ```
 
-6. Start the AI anomaly monitor only if MQTT/email environment variables are configured:
+6. شغل AI anomaly monitor بس لو MQTT/email env vars متظبطة:
 
 ```powershell
 python scripts\ai_dashboard_monitor.py
 ```
 
-## Database Migration Required
+## Migration المطلوبة لقاعدة البيانات
 
-The EF model now defines a unique index on `Product.ProductNumber`.
+EF model دلوقتي معرف unique index على:
 
-Before deploying this to a real database:
+```text
+Product.ProductNumber
+```
 
-1. Check for duplicate product codes in the current DB.
-2. Clean duplicates manually if any exist.
-3. Generate a migration after `.NET 8 SDK` is available.
-4. Apply the migration in a controlled environment.
+قبل ما تطبق ده على database حقيقية:
 
-Suggested migration command:
+1. راجع هل فيه duplicate product codes موجودة حاليا.
+2. لو فيه duplicates، نضفها يدوي قبل migration.
+3. اعمل migration بعد ما `.NET 8 SDK` يبقى متاح.
+4. طبق migration على environment متحكم فيه الأول.
+
+أوامر migration المقترحة:
 
 ```powershell
 dotnet ef migrations add EnforceUniqueProductNumber --project IoTBackend\IoTBackend.csproj
 dotnet ef database update --project IoTBackend\IoTBackend.csproj
 ```
 
-If `dotnet ef` is missing:
+لو `dotnet ef` مش موجود:
 
 ```powershell
 dotnet tool install --global dotnet-ef
 ```
 
-Do not apply the unique index to production before checking for duplicate `ProductNumber` values.
+مهم:
+
+متطبقش unique index على production قبل ما تتأكد إن مفيش duplicate `ProductNumber` values.
 
 ## Azure App Settings Checklist
 
-Before deploying to Azure, configure these in App Service settings or a secure secret store:
+قبل deploy على Azure، حط القيم دي في App Service settings أو secret store آمن:
 
 ```text
 ConnectionStrings__DefaultConnection
@@ -214,34 +245,34 @@ DefaultAdmin__Username
 DefaultAdmin__Password
 ```
 
-Notes:
+ملاحظات:
 
-- Azure usually provides `PORT`; locally the backend defaults to `5005`.
-- If `Mqtt__Host` is empty, MQTT will not run.
-- If `DefaultAdmin__Username` or `DefaultAdmin__Password` is missing, no admin user will be seeded.
-- Rotate any credentials that were previously committed before relying on this deployment.
+- Azure غالبا بيوفر `PORT`، أما لوكال فالـ backend default على `5005`.
+- لو `Mqtt__Host` فاضي، MQTT مش هيشتغل.
+- لو `DefaultAdmin__Username` أو `DefaultAdmin__Password` مش موجودين، مفيش admin user هيتعمله seed.
+- أي credentials كانت committed قبل كده لازم تتعملها rotation قبل الاعتماد على deployment.
 
-## QR / MQTT / SignalR Flow
+## مسار QR / MQTT / SignalR
 
-Expected QR flow after the audit fixes:
+المسار المتوقع بعد تعديلات الأودت:
 
-1. ESP32 or camera bridge publishes a QR/product code to MQTT.
-2. .NET `MqttService` receives it.
-3. Backend logs something like:
+1. ESP32 أو camera bridge ينشر QR/product code على MQTT.
+2. .NET `MqttService` يستقبل الرسالة.
+3. الباك إند يطبع log شبه ده:
 
 ```text
 QR Code forwarded to SignalR clients: PRODUCT_CODE
 ```
 
-4. Backend sends SignalR event:
+4. الباك إند يبعت SignalR event:
 
 ```text
 ReceiveProductNumberUpdate
 ```
 
-5. Angular `SensorService` receives it and updates `productNumber`.
+5. Angular `SensorService` يستقبل event ويحدث `productNumber`.
 
-Supported QR payload examples:
+أمثلة QR payloads مدعومة:
 
 ```json
 { "qr": "P-1001" }
@@ -250,68 +281,77 @@ Supported QR payload examples:
 { "code": "P-1001" }
 ```
 
-Also supported:
+كمان مدعوم:
 
-- Raw payload on a QR/product/barcode topic.
-- JSON object with `value` on a QR/product/barcode topic.
+- raw payload على topic فيه QR/product/barcode.
+- JSON object فيه `value` على topic فيه QR/product/barcode.
 
-If QR appears in Azure logs but not in the frontend:
+لو QR ظاهر في Azure logs بس مش ظاهر في الفرونت:
 
-- Confirm the frontend `hubUrl` points to the correct deployed backend `/hubs/factory`.
-- Confirm CORS includes the frontend origin.
-- Check browser console for SignalR errors.
-- Check backend logs for `QR Code forwarded to SignalR clients`.
-- Confirm the frontend is listening for `ReceiveProductNumberUpdate`.
-- Confirm the user is looking at the same backend instance that receives MQTT.
+- اتأكد إن frontend `hubUrl` شااور على `/hubs/factory` في نفس backend المنشور.
+- اتأكد إن CORS فيه frontend origin.
+- افتح browser console وشوف SignalR errors.
+- راجع backend logs ودور على `QR Code forwarded to SignalR clients`.
+- اتأكد إن الفرونت بيسمع `ReceiveProductNumberUpdate`.
+- اتأكد إن المستخدم فاتح نفس backend instance اللي بيستقبل MQTT.
 
-## Auth Changes Operators Need To Know
+## تغييرات الـ Auth
 
-Login response now includes `expiresAtUtc`.
+login response دلوقتي بيرجع `expiresAtUtc`.
 
-Sessions are still in-memory, but now expire after `Auth:SessionMinutes`.
+الـ sessions لسه in-memory، بس بقت بتنتهي بعد `Auth:SessionMinutes`.
 
-Operational impact:
+تأثير ده على التشغيل:
 
-- Restarting the .NET backend logs out all users.
-- Scaling to multiple backend instances can cause inconsistent sessions unless sticky sessions are used.
-- For production-grade multi-instance hosting, replace this with JWT or DB/Redis-backed sessions.
+- Restart للـ .NET backend هيعمل logout لكل المستخدمين.
+- لو Azure شغال بأكتر من backend instance، sessions ممكن تبقى inconsistent إلا لو فيه sticky sessions.
+- للإنتاج الحقيقي على أكتر من instance، الأفضل JWT أو DB/Redis-backed sessions.
 
-Admin user behavior:
+سلوك admin user:
 
-- Admin seeding only happens when both `DefaultAdmin:Username` and `DefaultAdmin:Password` are configured.
-- No public default admin password is created anymore.
+- admin seeding بيحصل بس لو `DefaultAdmin:Username` و`DefaultAdmin:Password` متظبطين.
+- مفيش public default admin password بيتعمل خلاص.
 
-## Product API Changes
+## تغييرات Product API
 
-Product create/update now:
+إنشاء أو تعديل المنتج دلوقتي بيعمل الآتي:
 
-- Trim product code.
-- Reject empty product code.
-- Reject negative weight.
-- Reject duplicate product code.
-- Require `Manager` or `Admin`.
+- trim للـ product code.
+- يرفض product code الفاضي.
+- يرفض الوزن السالب.
+- يرفض duplicate product code.
+- يتطلب `Manager` أو `Admin`.
 
-Frontend routes and buttons were updated to match these permissions.
+الفرونت routes والأزرار اتظبطت على نفس الصلاحيات.
 
-Product analytics now returns detailed scan rows in addition to aggregate values:
+Product analytics دلوقتي بترجع rows تفصيلية لكل scan بجانب القيم المجمعة:
 
 ```text
 GET /api/products/analytics/{productNumber}
 ```
 
-The response includes `scans`, where each row contains the scan id, sequence, actual weight, scan time, difference from ideal weight, and tolerance status.
+الـ response فيه `scans`، وكل scan فيها:
 
-Managers/Admins can reset scan history for one product without deleting the product:
+- scan id
+- sequence
+- actual weight
+- scan time
+- الفرق عن ideal weight
+- tolerance status
+
+Managers/Admins يقدروا يعملوا reset لسكانات منتج واحد من غير حذف المنتج نفسه:
 
 ```text
 DELETE /api/products/analytics/{productNumber}/scans
 ```
 
-Operational note: reset deletes rows from `ProductScans` for that product. Export or archive data first if the scan history must be preserved.
+ملاحظة تشغيلية:
+
+reset بيمسح rows من `ProductScans` للمنتج ده. لو scan history لازم يفضل محفوظ، اعمل export أو archive قبل reset.
 
 ## Health Endpoints
 
-Use these endpoints depending on what you need to check:
+استخدم endpoint حسب اللي عايز تتأكد منه:
 
 ```text
 /health       process is alive
@@ -319,13 +359,13 @@ Use these endpoints depending on what you need to check:
 /health/ready database is reachable
 ```
 
-Use `/health/live` for basic App Service liveness.
+استخدم `/health/live` كـ liveness check بسيط لـ App Service.
 
-Use `/health/ready` when you want to know whether the app can reach the database.
+استخدم `/health/ready` لما تحب تتأكد إن التطبيق قادر يوصل لقاعدة البيانات.
 
-## Verification Checklist
+## Checklist قبل التسليم أو النشر
 
-Run these before handing the build to deployment:
+شغل دول قبل ما تسلم build للـ deployment:
 
 ```powershell
 python -m compileall -q backend scripts train.py
@@ -336,26 +376,27 @@ cd ..
 dotnet build IoTBackend\IoTBackend.csproj
 ```
 
-Then verify manually:
+وبعدين اختبر يدوي:
 
-- Backend starts on `http://localhost:5005`.
-- `/health` returns alive.
-- `/health/ready` returns database connected.
-- Angular can login through local backend.
-- SignalR connects to `/hubs/factory`.
-- Python camera upload is accepted by .NET.
-- MQTT QR updates appear in Angular.
-- Product scans create analytics data.
-- Manager/Admin can add products.
-- Normal users cannot add/update/delete products.
+- الباك إند بدأ على `http://localhost:5005`.
+- `/health` بيرجع alive.
+- `/health/ready` بيرجع database connected.
+- Angular يقدر يعمل login من خلال backend.
+- SignalR بيتصل بـ `/hubs/factory`.
+- Python camera upload مقبول من .NET.
+- MQTT QR updates بتظهر في Angular.
+- product scans بتتسجل وتظهر في analytics.
+- Manager/Admin يقدر يضيف منتجات.
+- Manager/Admin يقدر يعمل reset scans.
+- المستخدم العادي ميقدرش add/update/delete products ولا reset scans.
 
-## Known Pending Work
+## شغل لسه متبقي
 
-These items are intentionally not fully completed yet:
+الحاجات دي لسه intentionally مش مخلصة بالكامل:
 
-- Generate and apply EF migration for unique `ProductNumber`.
-- Add a real `ProductScan.ProductId` foreign key and backfill old scan rows.
-- Replace in-memory sessions with JWT or persistent sessions for multi-instance production.
-- Make .NET camera controls actually control the Python camera process.
-- Coordinate a JSON MQTT command schema with ESP32 firmware.
-- Clean or remove legacy Flask/static UI files if they are not used.
+- Generate/apply EF migration للـ unique `ProductNumber`.
+- إضافة `ProductScan.ProductId` كـ foreign key حقيقي وعمل backfill للسكانات القديمة.
+- استبدال in-memory sessions بـ JWT أو persistent sessions لو الإنتاج multi-instance.
+- تخلي .NET camera controls تتحكم فعلا في Python camera process.
+- الاتفاق مع ESP32 firmware على JSON MQTT command schema واضح.
+- تنظيف أو حذف legacy Flask/static UI files لو مش مستخدمة.

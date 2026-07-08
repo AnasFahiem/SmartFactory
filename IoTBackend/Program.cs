@@ -10,13 +10,12 @@ using Microsoft.AspNetCore.SignalR;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. DYNAMIC PORT FOR AZURE
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5005";
 builder.WebHost.UseUrls($"http://*:{port}");
 
 // 2. DATABASE CONFIGURATION
-// Note: I changed "smartfacory" to "smartfactory" here just in case it was a typo!
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Server=smartfacory.mysql.database.azure.com;Database=iotdb;Uid=mikha;Pwd=12345678Me@;SslMode=Required";
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
 
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 30));
 
@@ -54,11 +53,26 @@ builder.Services.Configure<FormOptions>(options =>
 builder.Services.AddControllers();
 
 // 5. CORS CONFIGURATION
+var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
+    .GetChildren()
+    .Select(origin => origin.Value)
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Cast<string>()
+    .ToArray();
+var allowedOrigins = configuredOrigins.Length > 0
+    ? configuredOrigins
+    : new[]
+    {
+        "https://smart-factory-client.azurewebsites.net",
+        "http://localhost:4200",
+        "https://localhost:4200"
+    };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("https://smart-factory-client.azurewebsites.net")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -70,16 +84,18 @@ var app = builder.Build();
 // 6. HEALTH CHECK (Azure Warmup Fix)
 app.MapGet("/", () => "IoT Backend is Online");
 
-app.MapGet("/health", async (AppDbContext dbContext) =>
+app.MapGet("/health", () => Results.Ok(new { status = "Alive" })).AllowAnonymous();
+app.MapGet("/health/live", () => Results.Ok(new { status = "Alive" })).AllowAnonymous();
+
+app.MapGet("/health/ready", async (AppDbContext dbContext) =>
 {
     try
     {
         var count = await dbContext.Products.CountAsync();
-        return Results.Ok(new { status = "Healthy", database = "Connected", productCount = count });
+        return Results.Ok(new { status = "Ready", database = "Connected", productCount = count });
     }
     catch (Exception ex)
     {
-        // THIS IS THE CRUCIAL CHANGE: We are now grabbing the InnerException
         var realError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
         return Results.Problem(detail: realError, title: "Database Connection Failed");
     }
@@ -95,7 +111,7 @@ _ = Task.Run(async () =>
         await dbContext.Database.MigrateAsync();
         Console.WriteLine("✅ Database Migration Finished.");
         // Make sure DbSeeder exists in your project, otherwise comment this out:
-        await DbSeeder.SeedUsersAsync(dbContext);
+        await DbSeeder.SeedUsersAsync(dbContext, app.Configuration);
     }
     catch (Exception ex)
     {

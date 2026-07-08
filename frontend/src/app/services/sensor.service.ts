@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
+import { environment } from '../../environments/environment';
 
 interface BackendStats {
     total_people: number;
@@ -12,8 +13,8 @@ interface BackendStats {
     providedIn: 'root'
 })
 export class SensorService {
-    private apiUrl = 'https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net';
-    private hubUrl = 'https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/hubs/factory';
+    private apiUrl = environment.apiUrl;
+    private hubUrl = environment.hubUrl;
     private hubConnection: signalR.HubConnection | null = null;
 
     // --- Data Properties ---
@@ -30,6 +31,10 @@ export class SensorService {
     constructor(private http: HttpClient) { }
 
     start(): void {
+        if (this.hubConnection && this.hubConnection.state !== signalR.HubConnectionState.Disconnected) {
+            return;
+        }
+
         this.startHubConnection();
         // Old Polling removed to fix "ti" timeout errors.
     }
@@ -68,8 +73,12 @@ export class SensorService {
             this.weight = weight;
         });
 
-        this.hubConnection.on('ReceiveProductNumberUpdate', (productNumber: string) => {
-            this.productNumber = productNumber;
+        this.hubConnection.on('ReceiveProductNumberUpdate', (productNumber: string | { productNumber?: string; qr?: string; code?: string }) => {
+            const value = typeof productNumber === 'string'
+                ? productNumber
+                : (productNumber.productNumber || productNumber.qr || productNumber.code || '');
+            this.productNumber = value;
+            console.log('Product number update received:', value);
         });
 
         this.hubConnection.on('ReceiveAiAlert', (message: string) => {
@@ -84,7 +93,7 @@ export class SensorService {
         this.hubConnection.start()
             .then(() => {
                 this.connectionStatus = 'Connected';
-                console.log('SignalR Connected to Azure.');
+                console.log('SignalR connected.');
             })
             .catch(err => {
                 this.connectionStatus = 'Error';
@@ -109,7 +118,7 @@ export class SensorService {
     }
 
     getProductAnalytics(productNumber: string): Observable<any> {
-        return this.http.get(`${this.apiUrl}/api/products/analytics/${productNumber}`);
+        return this.http.get(`${this.apiUrl}/api/products/analytics/${encodeURIComponent(productNumber)}`);
     }
 
     getAllProducts(): Observable<any[]> {

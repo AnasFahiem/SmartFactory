@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using IoTBackend.Data;
 using IoTBackend.Models;
 using IoTBackend.Attributes;
@@ -20,18 +21,18 @@ namespace IoTBackend.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Product>> GetProducts()
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            var products = _dbContext.Products.ToList();
+            var products = await _dbContext.Products.ToListAsync();
             return Ok(products);
         }
 
         [HttpGet("latest")]
-        public ActionResult<Product> GetLatestProduct()
+        public async Task<ActionResult<Product>> GetLatestProduct()
         {
-            var latestProduct = _dbContext.Products
+            var latestProduct = await _dbContext.Products
                 .OrderByDescending(p => p.Id)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
             if (latestProduct == null)
                 return NotFound();
@@ -40,13 +41,21 @@ namespace IoTBackend.Controllers
         }
 
         [HttpGet("analytics/{productNumber}")]
-        public ActionResult GetProductAnalytics(string productNumber)
+        public async Task<ActionResult> GetProductAnalytics(string productNumber)
         {
-            var product = _dbContext.Products.FirstOrDefault(p => p.ProductNumber == productNumber);
+            if (string.IsNullOrWhiteSpace(productNumber))
+            {
+                return BadRequest(new { message = "Product code is required." });
+            }
+
+            var normalizedProductNumber = productNumber.Trim();
+            var product = await _dbContext.Products.FirstOrDefaultAsync(p => p.ProductNumber == normalizedProductNumber);
             if (product == null)
                 return NotFound(new { message = "Product not found." });
 
-            var scans = _dbContext.ProductScans.Where(s => s.ProductNumber == productNumber).ToList();
+            var scans = await _dbContext.ProductScans
+                .Where(s => s.ProductNumber == normalizedProductNumber)
+                .ToListAsync();
             var totalScans = scans.Count;
             decimal averageActualWeight = 0;
             decimal variance = 0;
@@ -71,6 +80,7 @@ namespace IoTBackend.Controllers
         }
 
         [HttpPost]
+        [CustomAuthorize(Roles = "Manager,Admin")]
         public async Task<ActionResult<Product>> CreateProduct([FromBody] Product productDto)
         {
             if (productDto == null || string.IsNullOrWhiteSpace(productDto.ProductNumber))
@@ -78,9 +88,21 @@ namespace IoTBackend.Controllers
                 return BadRequest(new { message = "Product code is required." });
             }
 
+            if (productDto.Weight.HasValue && productDto.Weight.Value < 0)
+            {
+                return BadRequest(new { message = "Weight cannot be negative." });
+            }
+
+            var normalizedProductNumber = productDto.ProductNumber.Trim();
+            var exists = await _dbContext.Products.AnyAsync(p => p.ProductNumber == normalizedProductNumber);
+            if (exists)
+            {
+                return Conflict(new { message = "Product code already exists." });
+            }
+
             var newProduct = new Product
             {
-                ProductNumber = productDto.ProductNumber,
+                ProductNumber = normalizedProductNumber,
                 Weight = productDto.Weight
             };
 
@@ -103,7 +125,20 @@ namespace IoTBackend.Controllers
                 return BadRequest(new { message = "Product code is required." });
             }
 
-            product.ProductNumber = productDto.ProductNumber;
+            if (productDto.Weight.HasValue && productDto.Weight.Value < 0)
+            {
+                return BadRequest(new { message = "Weight cannot be negative." });
+            }
+
+            var normalizedProductNumber = productDto.ProductNumber.Trim();
+            var duplicateExists = await _dbContext.Products
+                .AnyAsync(p => p.Id != id && p.ProductNumber == normalizedProductNumber);
+            if (duplicateExists)
+            {
+                return Conflict(new { message = "Product code already exists." });
+            }
+
+            product.ProductNumber = normalizedProductNumber;
             product.Weight = productDto.Weight;
 
             await _dbContext.SaveChangesAsync();

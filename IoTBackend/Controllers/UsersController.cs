@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using IoTBackend.Data;
 using IoTBackend.Attributes;
+using IoTBackend.Services;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -74,12 +75,12 @@ namespace IoTBackend.Controllers
                 return BadRequest(new { message = "Cannot change role of the default admin user." });
             }
 
-            if (string.IsNullOrWhiteSpace(updateRoleDto.Role))
+            if (!RolePolicy.TryNormalize(updateRoleDto.Role, out var normalizedRole))
             {
-                return BadRequest(new { message = "Role is required." });
+                return BadRequest(new { message = "Invalid role. Allowed roles are User, Manager, and Admin." });
             }
 
-            user.Role = updateRoleDto.Role;
+            user.Role = normalizedRole;
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "User role updated successfully.", role = user.Role });

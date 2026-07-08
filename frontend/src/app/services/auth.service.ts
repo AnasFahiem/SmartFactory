@@ -1,21 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 interface LoginResponse {
   token: string;
   username: string;
   role: string;
+  expiresAtUtc?: string;
+}
+
+interface CurrentUserResponse {
+  username: string;
+  role: string;
+  expiresAtUtc?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Point to Azure Backend by default, similar to SensorService, but allow dynamically using the window.location for local dev if appropriate
-  private apiUrl = 'https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net';
+  private apiUrl = environment.apiUrl;
   
   private currentUserSubject = new BehaviorSubject<LoginResponse | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -25,7 +32,12 @@ export class AuthService {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       try {
-        this.currentUserSubject.next(JSON.parse(savedUser));
+        const user = JSON.parse(savedUser) as LoginResponse;
+        if (this.isExpired(user)) {
+          this.clearSession(false);
+        } else {
+          this.currentUserSubject.next(user);
+        }
       } catch (e) {
         localStorage.removeItem('currentUser');
       }
@@ -33,11 +45,26 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return this.currentUserSubject.value !== null;
+    const user = this.currentUserSubject.value;
+    if (!user) {
+      return false;
+    }
+
+    if (this.isExpired(user)) {
+      this.clearSession(false);
+      return false;
+    }
+
+    return true;
   }
 
   getCurrentUser(): LoginResponse | null {
     return this.currentUserSubject.value;
+  }
+
+  hasAnyRole(roles: string[]): boolean {
+    const user = this.getCurrentUser();
+    return !!user && roles.includes(user.role);
   }
 
   getToken(): string | null {
@@ -48,9 +75,28 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.apiUrl}/api/auth/login`, { username, password })
       .pipe(
         tap(user => {
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          this.currentUserSubject.next(user);
+          this.storeUser(user);
         })
+      );
+  }
+
+  refreshCurrentUser(): Observable<LoginResponse> {
+    return this.http.get<CurrentUserResponse>(`${this.apiUrl}/api/auth/me`)
+      .pipe(
+        map(profile => {
+          const current = this.currentUserSubject.value;
+          if (!current?.token) {
+            throw new Error('No active token.');
+          }
+
+          return {
+            token: current.token,
+            username: profile.username,
+            role: profile.role,
+            expiresAtUtc: profile.expiresAtUtc
+          };
+        }),
+        tap(user => this.storeUser(user))
       );
   }
 
@@ -77,9 +123,39 @@ export class AuthService {
     return this.http.put(`${this.apiUrl}/api/auth/me`, payload);
   }
 
-  logout(): void {
+  clearSession(redirect: boolean = true): void {
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
+    if (redirect) {
+      this.router.navigate(['/login']);
+    }
+  }
+
+  logout(): void {
+    const finishLogout = () => this.clearSession(true);
+
+    if (!this.getToken()) {
+      finishLogout();
+      return;
+    }
+
+    this.http.post(`${this.apiUrl}/api/auth/logout`, {}).subscribe({
+      next: finishLogout,
+      error: finishLogout
+    });
+  }
+
+  private storeUser(user: LoginResponse): void {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
+  private isExpired(user: LoginResponse): boolean {
+    if (!user.expiresAtUtc) {
+      return false;
+    }
+
+    const expiresAt = Date.parse(user.expiresAtUtc);
+    return !Number.isNaN(expiresAt) && expiresAt <= Date.now();
   }
 }

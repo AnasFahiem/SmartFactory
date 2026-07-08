@@ -13,33 +13,48 @@ import { SensorService } from '../../services/sensor.service';
 })
 export class AddProductComponent {
   product = {
-    weight: null,
+    weight: null as number | null,
     code: ''
   };
 
   successMessage: string = '';
+  errorMessage: string = '';
 
   constructor(private router: Router, private sensorService: SensorService) {}
 
   onSubmit() {
-    if (this.product.weight && this.product.code) {
-      this.sensorService.addProduct({
-        productNumber: this.product.code,
-        weight: this.product.weight
-      }).subscribe({
-        next: (res) => {
-          this.successMessage = `Product code '${this.product.code}' added successfully!`;
-          
-          setTimeout(() => {
-            this.product = { weight: null as any, code: '' };
-            this.successMessage = '';
-          }, 3000);
-        },
-        error: (err) => {
-          console.error('Error adding product', err);
-        }
-      });
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    const code = this.product.code.trim();
+    const weight = this.product.weight;
+    if (!code) {
+      this.errorMessage = 'Product code is required.';
+      return;
     }
+
+    if (weight === null || weight === undefined || Number.isNaN(Number(weight)) || Number(weight) < 0) {
+      this.errorMessage = 'Weight must be zero or a positive number.';
+      return;
+    }
+
+    this.sensorService.addProduct({
+      productNumber: code,
+      weight: Number(weight)
+    }).subscribe({
+      next: () => {
+        this.successMessage = `Product code '${code}' added successfully!`;
+
+        setTimeout(() => {
+          this.product = { weight: null, code: '' };
+          this.successMessage = '';
+        }, 3000);
+      },
+      error: (err) => {
+        console.error('Error adding product', err);
+        this.errorMessage = err?.error?.message || 'Could not add product.';
+      }
+    });
   }
 
   goBack() {

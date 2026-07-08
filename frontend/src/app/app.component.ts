@@ -8,5 +8,12 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
     title = 'IoTFrontend';
-    constructor(public authService: AuthService) {}
+
+    constructor(public authService: AuthService) {
+        if (this.authService.isLoggedIn()) {
+            this.authService.refreshCurrentUser().subscribe({
+                error: () => this.authService.clearSession()
+            });
+        }
+    }
 }

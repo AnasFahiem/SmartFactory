@@ -7,23 +7,27 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
+from dotenv import load_dotenv
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(project_root, ".env"))
 
 # ==========================================
 # 1. إعدادات MQTT (HiveMQ Cloud الخاص بالمشروع)
 # ==========================================
-MQTT_BROKER = "158d9042fc2542248a400b91e6b8c138.s1.eu.hivemq.cloud"
-MQTT_PORT = 8883
-MQTT_USER = "iotuser"
-MQTT_PASS = "12345678Me"
-MQTT_TOPIC = "factory/#"
+MQTT_BROKER = os.getenv("MQTT_BROKER", "")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "8883"))
+MQTT_USER = os.getenv("MQTT_USER", "")
+MQTT_PASS = os.getenv("MQTT_PASS", "")
+MQTT_TOPIC = os.getenv("MQTT_TOPIC", "factory/#")
 
 # ==========================================
 # 2. إعدادات البريد الإلكتروني للإنذارات
 # ==========================================
 # يرجى تعديلها ببيانات البريد الخاص بك (يجب استخدام App Password وليس الباسورد العادي)
-EMAIL_SENDER = "anasfaheim2003@gmail.com"
-EMAIL_PASSWORD = "nydy piev ioaw ddxv"
-EMAIL_RECEIVER = "anasfahiem18@gmail.com"
+EMAIL_SENDER = os.getenv("EMAIL_SENDER", "")
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "")
+EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER", "")
 
 # ==========================================
 # 3. تحميل الموديل
@@ -38,7 +42,7 @@ else:
 
 def send_email_alert(alert_message):
     """دالة لإرسال إيميل تحذيري للمسؤول"""
-    if EMAIL_SENDER == "your_email@gmail.com":
+    if not EMAIL_SENDER or not EMAIL_PASSWORD or not EMAIL_RECEIVER:
         print("\n[MOCK EMAIL ALERT]")
         print(alert_message)
         print("==================\n")
@@ -147,6 +151,10 @@ def run_dummy_server():
 
 if __name__ == "__main__":
     print("Starting Factory AI Monitor...")
+
+    if not MQTT_BROKER or not MQTT_USER or not MQTT_PASS:
+        print("MQTT settings are missing. Set MQTT_BROKER, MQTT_USER, and MQTT_PASS in .env.")
+        raise SystemExit(1)
     
     # Start the dummy web server in a background thread
     threading.Thread(target=run_dummy_server, daemon=True).start()

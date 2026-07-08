@@ -1,4 +1,4 @@
-﻿using IoTBackend.Hubs;
+using IoTBackend.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
@@ -27,6 +27,14 @@ namespace IoTBackend.Controllers
                 return Unauthorized();
 
             await _hubContext.Clients.All.SendAsync("ReceiveCameraFrame", request.Image);
+            
+            // Broadcast the AI stats to the Angular frontend
+            await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate", new 
+            {
+                total_people = request.TotalPeople,
+                violations = request.Violations
+            });
+            
             return Ok();
         }
 
@@ -60,6 +68,8 @@ namespace IoTBackend.Controllers
     {
         public string Image { get; set; } = string.Empty;
         public string SecretKey { get; set; } = string.Empty;
+        public int TotalPeople { get; set; }
+        public int Violations { get; set; }
     }
 
     public class CameraActionRequest

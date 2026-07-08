@@ -17,17 +17,25 @@ CORS(app)
 # Use localhost for local testing via start_app.bat, or the Azure URL for cloud deployment.
 # Local: http://localhost:5005/api/camera/upload
 # Cloud: https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload
-API_URL = os.getenv("API_URL", " https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload")
+API_URL = os.getenv("API_URL", "https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload")
 # TODO: SECURITY RISK - Move this to an environment variable (.env) before production
 MY_SECRET = "YourSuperSecretKey123"
-CAMERA_SOURCE = "http://adminanas:admin123@10.188.242.214:554/stream" # Leave empty (0) for default webcam, or put an IP camera URL here
+CAMERA_SOURCE = "rtsp://adminanas:admin123@10.188.242.214:554/stream2" # Use stream2 for fastest performance with Mercusys/Tapo cameras
 
 # Global stats
 current_stats = {"total_people": 0, "violations": 0}
 
 # Initialize Hardware
 camera = VideoCamera(source=CAMERA_SOURCE)
-detector = PPE_Detector()
+
+# Safely locate best.pt whether running from root or backend folder
+script_dir = os.path.dirname(os.path.abspath(__file__))
+best_path = os.path.join(script_dir, "best.pt")
+if not os.path.exists(best_path):
+    # Fallback if running directly from backend folder but best.pt is somewhere else
+    best_path = os.path.join(os.path.dirname(script_dir), "backend", "best.pt")
+    
+detector = PPE_Detector(model_path=best_path)
 session = requests.Session() # Use session for better performance (Keep-Alive)
 
 def azure_push_loop():
@@ -61,14 +69,28 @@ def azure_push_loop():
             payload = {
                 "image": full_b64,
                 "secretKey": MY_SECRET,
-                "violationCount": stats['violations']
+                "violationCount": stats['violations'],
+                "violations": stats['violations'],
+                "personCount": stats['total_people'],
+                "totalPeople": stats['total_people'],
+                "total_people": stats['total_people'] # Expected by Angular Frontend via SignalR!
             }
             
+            # Debug: Print the stats we are trying to push
+            print(f"[Azure API] Pushing stats: People={stats['total_people']}, Violations={stats['violations']}")
+            
             # Non-blocking post (short timeout)
-            session.post(API_URL, json=payload, timeout=0.5)
+            response = session.post(API_URL, json=payload, timeout=0.5)
+            if response.status_code != 200:
+                print(f"[Azure API] Error {response.status_code}: {response.text}")
 
+        except requests.exceptions.RequestException as e:
+            # We specifically catch requests exceptions to avoid spamming the console 
+            # if the server is just slow, but we can print it for debugging.
+            print(f"[Azure API] Connection Error: {e}")
+            time.sleep(1)
         except Exception as e:
-            print(f"Push Error: {e}")
+            print(f"[Azure API] Unknown Error: {e}")
             time.sleep(1)
 
         # Control Frame Rate (e.g., 5-10 FPS is good for factory monitoring)

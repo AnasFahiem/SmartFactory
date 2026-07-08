@@ -293,6 +293,22 @@ Product create/update now:
 
 Frontend routes and buttons were updated to match these permissions.
 
+Product analytics now returns detailed scan rows in addition to aggregate values:
+
+```text
+GET /api/products/analytics/{productNumber}
+```
+
+The response includes `scans`, where each row contains the scan id, sequence, actual weight, scan time, difference from ideal weight, and tolerance status.
+
+Managers/Admins can reset scan history for one product without deleting the product:
+
+```text
+DELETE /api/products/analytics/{productNumber}/scans
+```
+
+Operational note: reset deletes rows from `ProductScans` for that product. Export or archive data first if the scan history must be preserved.
+
 ## Health Endpoints
 
 Use these endpoints depending on what you need to check:
@@ -343,4 +359,3 @@ These items are intentionally not fully completed yet:
 - Make .NET camera controls actually control the Python camera process.
 - Coordinate a JSON MQTT command schema with ESP32 firmware.
 - Clean or remove legacy Flask/static UI files if they are not used.
-

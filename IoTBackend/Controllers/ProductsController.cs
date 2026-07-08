@@ -55,6 +55,7 @@ namespace IoTBackend.Controllers
 
             var scans = await _dbContext.ProductScans
                 .Where(s => s.ProductNumber == normalizedProductNumber)
+                .OrderByDescending(s => s.ScanTime)
                 .ToListAsync();
             var totalScans = scans.Count;
             decimal averageActualWeight = 0;
@@ -69,13 +70,75 @@ namespace IoTBackend.Controllers
                 }
             }
 
+            var scanRows = scans.Select((scan, index) =>
+            {
+                decimal? differenceFromIdeal = product.Weight.HasValue
+                    ? scan.ActualWeight - product.Weight.Value
+                    : null;
+                bool? isWithinTolerance = product.Weight.HasValue
+                    ? Math.Abs(scan.ActualWeight - product.Weight.Value) <= product.Weight.Value * 0.10m
+                    : null;
+
+                return new
+                {
+                    Sequence = totalScans - index,
+                    scan.Id,
+                    scan.ProductNumber,
+                    scan.ActualWeight,
+                    scan.ScanTime,
+                    DifferenceFromIdeal = differenceFromIdeal,
+                    IsWithinTolerance = isWithinTolerance
+                };
+            });
+
             return Ok(new
             {
                 ProductNumber = product.ProductNumber,
                 IdealWeight = product.Weight,
                 AverageActualWeight = averageActualWeight,
                 Variance = variance,
-                TotalScans = totalScans
+                TotalScans = totalScans,
+                Scans = scanRows
+            });
+        }
+
+        [HttpDelete("analytics/{productNumber}/scans")]
+        [CustomAuthorize(Roles = "Manager,Admin")]
+        public async Task<IActionResult> ResetProductScans(string productNumber)
+        {
+            if (string.IsNullOrWhiteSpace(productNumber))
+            {
+                return BadRequest(new { message = "Product code is required." });
+            }
+
+            var normalizedProductNumber = productNumber.Trim();
+            var productExists = await _dbContext.Products.AnyAsync(p => p.ProductNumber == normalizedProductNumber);
+            if (!productExists)
+            {
+                return NotFound(new { message = "Product not found." });
+            }
+
+            var scans = await _dbContext.ProductScans
+                .Where(scan => scan.ProductNumber == normalizedProductNumber)
+                .ToListAsync();
+
+            var deletedCount = scans.Count;
+            if (deletedCount > 0)
+            {
+                _dbContext.ProductScans.RemoveRange(scans);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            _logger.LogInformation(
+                "Reset {DeletedCount} product scans for product {ProductNumber}.",
+                deletedCount,
+                normalizedProductNumber);
+
+            return Ok(new
+            {
+                message = "Product scans reset successfully.",
+                productNumber = normalizedProductNumber,
+                deletedCount
             });
         }
 

@@ -5,6 +5,9 @@
     </button>
     <h1>Product Analytics</h1>
     <p>Performance and variance tracking for Product <strong>{{ productNumber }}</strong></p>
+    <button *ngIf="canResetScans" class="reset-btn" (click)="resetScans()" [disabled]="resetLoading || loading">
+      {{ resetLoading ? 'Resetting...' : 'Reset Scans' }}
+    </button>
   </div>
 
   <div class="content-layout">
@@ -17,6 +20,10 @@
     <div class="error-message" *ngIf="error && !loading">
       <span class="error-icon">❌</span>
       {{ error }}
+    </div>
+
+    <div class="success-message" *ngIf="resetMessage && !loading">
+      {{ resetMessage }}
     </div>
 
     <div class="analytics-card" *ngIf="!loading && analyticsData">
@@ -65,6 +72,51 @@
           </div>
         </div>
 
+      </div>
+
+      <div class="scans-section">
+        <div class="card-header">
+          <span class="header-icon">#</span>
+          <h2>Individual Scan Trace</h2>
+        </div>
+
+        <div class="empty-scans" *ngIf="!analyticsData.scans || analyticsData.scans.length === 0">
+          No scans recorded for this product yet.
+        </div>
+
+        <div class="scan-table-wrapper" *ngIf="analyticsData.scans && analyticsData.scans.length > 0">
+          <table class="scan-table">
+            <thead>
+              <tr>
+                <th>Scan</th>
+                <th>Time</th>
+                <th>Actual Weight</th>
+                <th>Difference</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let scan of analyticsData.scans" [ngClass]="{'scan-warning': !isScanGood(scan)}">
+                <td>#{{ scan.sequence }}</td>
+                <td>{{ scan.scanTime | date:'medium' }}</td>
+                <td>{{ scan.actualWeight | number:'1.2-2' }} g</td>
+                <td>
+                  <ng-container *ngIf="scan.differenceFromIdeal !== null && scan.differenceFromIdeal !== undefined">
+                    {{ scan.differenceFromIdeal > 0 ? '+' : '' }}{{ scan.differenceFromIdeal | number:'1.2-2' }} g
+                  </ng-container>
+                  <ng-container *ngIf="scan.differenceFromIdeal === null || scan.differenceFromIdeal === undefined">
+                    ---
+                  </ng-container>
+                </td>
+                <td>
+                  <span class="scan-status" [ngClass]="isScanGood(scan) ? 'ok' : 'bad'">
+                    {{ scan.isWithinTolerance === null || scan.isWithinTolerance === undefined ? 'No Ideal Weight' : (isScanGood(scan) ? 'Within Range' : 'Out of Range') }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>

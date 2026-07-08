@@ -121,6 +121,10 @@ export class SensorService {
         return this.http.get(`${this.apiUrl}/api/products/analytics/${encodeURIComponent(productNumber)}`);
     }
 
+    resetProductScans(productNumber: string): Observable<any> {
+        return this.http.delete(`${this.apiUrl}/api/products/analytics/${encodeURIComponent(productNumber)}/scans`);
+    }
+
     getAllProducts(): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/api/products`);
     }

@@ -4,6 +4,7 @@ import cv2
 import base64
 import numpy as np
 import time
+import threading
 from flask import Flask, render_template_string, request, jsonify, Response
 
 # Add root folder to path to import detector safely
@@ -28,6 +29,63 @@ app = Flask(__name__)
 
 # Standalone Webcam handler
 camera = VideoCamera()
+
+# IP Camera state
+ip_camera_thread = None
+ip_cam_running = False
+ip_cam_url = ""
+
+class ThreadedIPCamera:
+    def __init__(self, url):
+        self.url = url
+        
+        # Extremely aggressive FFMPEG flags for zero-latency RTSP
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|fflags;nobuffer|flags;low_delay|flags2;fast"
+        
+        self.cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+        self.ret = False
+        self.frame = None
+        self.running = True
+        self.frame_requested = True # Flag to tell the thread to decode a frame
+        
+        # Start background thread immediately if opened
+        if self.cap.isOpened():
+            self.cap.grab()
+            self.ret, self.frame = self.cap.retrieve()
+            self.thread = threading.Thread(target=self.update, args=())
+            self.thread.daemon = True
+            self.thread.start()
+
+    def update(self):
+        while self.running:
+            if self.cap.isOpened():
+                # grab() instantly pulls the frame from the network socket WITHOUT decoding it.
+                # This takes almost 0ms and keeps the network buffer completely empty.
+                grabbed = self.cap.grab()
+                
+                # Only perform the heavy decoding (retrieve) if the main thread actually needs it
+                if grabbed and self.frame_requested:
+                    self.ret, self.frame = self.cap.retrieve()
+                    self.frame_requested = False
+            else:
+                time.sleep(0.01)
+
+    def read(self):
+        # Tell the background thread we are ready for the next decoded frame
+        self.frame_requested = True
+        return self.ret, self.frame
+        
+    def isOpened(self):
+        return self.cap.isOpened() if self.cap else False
+
+    def release(self):
+        self.running = False
+        if hasattr(self, 'thread') and self.thread.is_alive():
+            self.thread.join(timeout=1.0)
+        if self.cap:
+            self.cap.release()
 
 # Beautiful single-page dashboard HTML
 HTML_TEMPLATE = """
@@ -319,6 +377,16 @@ HTML_TEMPLATE = """
                 <button class="btn" id="startCamBtn">Start Live Webcam</button>
                 <button class="btn btn-danger" id="stopCamBtn" style="display: none;">Stop Webcam</button>
             </div>
+
+            <div class="control-group">
+                <h3>IP Camera Stream</h3>
+                <input type="text" id="ipCamInput" placeholder="rtsp://user:pass@IP:port/stream"
+                    style="width: 100%; padding: 0.75rem; border-radius: 12px; border: 1px solid var(--glass-border);
+                    background: rgba(255,255,255,0.05); color: var(--text); font-family: 'Outfit', sans-serif;
+                    font-size: 0.9rem; outline: none;">
+                <button class="btn btn-secondary" id="startIpCamBtn">Connect IP Camera</button>
+                <button class="btn btn-danger" id="stopIpCamBtn" style="display: none;">Disconnect IP Camera</button>
+            </div>
             
             <div class="control-group" id="statsPanel" style="display: none;">
                 <h3>Detection Stats</h3>
@@ -363,6 +431,11 @@ HTML_TEMPLATE = """
         const valViolations = document.getElementById('valViolations');
 
         let isWebcamActive = false;
+        let isIpCamActive = false;
+
+        const ipCamInput = document.getElementById('ipCamInput');
+        const startIpCamBtn = document.getElementById('startIpCamBtn');
+        const stopIpCamBtn = document.getElementById('stopIpCamBtn');
 
         // Image upload handler
         imageInput.addEventListener('change', async (e) => {
@@ -423,6 +496,49 @@ HTML_TEMPLATE = """
             placeholder.style.display = 'flex';
             statsPanel.style.display = 'none';
             fetch('/api/stop_webcam', { method: 'POST' });
+        }
+
+        // IP Camera handlers
+        startIpCamBtn.addEventListener('click', async () => {
+            const url = ipCamInput.value.trim();
+            if (!url) { alert('Please enter an IP camera URL'); return; }
+
+            if (isWebcamActive) stopWebcam();
+            if (isIpCamActive) await stopIpCam();
+
+            try {
+                const res = await fetch('/api/start_ipcam', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+                const data = await res.json();
+                if (!data.success) { alert('Failed to connect: ' + (data.error || 'Unknown error')); return; }
+
+                isIpCamActive = true;
+                startIpCamBtn.style.display = 'none';
+                stopIpCamBtn.style.display = 'block';
+                placeholder.style.display = 'none';
+                displayImg.src = '/api/ipcam_feed';
+                displayImg.style.display = 'block';
+                statsPanel.style.display = 'block';
+                startStatsPolling();
+            } catch (err) {
+                console.error('IP cam error:', err);
+                alert('Connection failed. Check the URL and try again.');
+            }
+        });
+
+        stopIpCamBtn.addEventListener('click', stopIpCam);
+
+        async function stopIpCam() {
+            isIpCamActive = false;
+            startIpCamBtn.style.display = 'block';
+            stopIpCamBtn.style.display = 'none';
+            displayImg.style.display = 'none';
+            placeholder.style.display = 'flex';
+            statsPanel.style.display = 'none';
+            await fetch('/api/stop_ipcam', { method: 'POST' });
         }
 
         let pollInterval;
@@ -510,6 +626,65 @@ def video_feed():
 def stop_webcam():
     camera.stop()
     return jsonify({"success": True})
+
+# API 3: IP Camera Stream
+@app.route('/api/start_ipcam', methods=['POST'])
+def start_ipcam():
+    global ip_camera_thread, ip_cam_running, ip_cam_url
+    data = request.get_json()
+    url = data.get('url', '')
+    if not url:
+        return jsonify({"success": False, "error": "No URL provided"})
+
+    # Release any existing IP cam
+    if ip_camera_thread is not None:
+        ip_camera_thread.release()
+
+    ip_camera_thread = ThreadedIPCamera(url)
+    if not ip_camera_thread.isOpened():
+        ip_camera_thread = None
+        return jsonify({"success": False, "error": "Could not connect to IP camera. Check URL/credentials."})
+
+    ip_cam_running = True
+    ip_cam_url = url
+    print(f"[IP CAM] Connected to: {url}")
+    return jsonify({"success": True})
+
+@app.route('/api/stop_ipcam', methods=['POST'])
+def stop_ipcam():
+    global ip_camera_thread, ip_cam_running
+    ip_cam_running = False
+    if ip_camera_thread is not None:
+        ip_camera_thread.release()
+        ip_camera_thread = None
+    print("[IP CAM] Disconnected.")
+    return jsonify({"success": True})
+
+def gen_ipcam_frames():
+    global latest_webcam_stats, ip_camera_thread, ip_cam_running
+    while ip_cam_running and ip_camera_thread is not None:
+        ret, frame = ip_camera_thread.read()
+        if not ret or frame is None:
+            time.sleep(0.03)
+            continue
+
+        # We copy the frame to avoid the background thread overwriting it during inference
+        current_frame = frame.copy()
+
+        if detector:
+            annotated_frame, stats = detector.detect(current_frame)
+            latest_webcam_stats = stats
+        else:
+            annotated_frame = current_frame
+
+        ret, buffer = cv2.imencode('.jpg', annotated_frame)
+        frame_bytes = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+@app.route('/api/ipcam_feed')
+def ipcam_feed():
+    return Response(gen_ipcam_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/api/stats')
 def get_stats():

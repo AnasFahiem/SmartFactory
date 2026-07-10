@@ -47,13 +47,15 @@ class ThreadedIPCamera:
 
         self.ret = False
         self.frame = None
+        self.lock = threading.Lock()
         self.running = True
-        self.frame_requested = True # Flag to tell the thread to decode a frame
+        self.new_frame_ready = threading.Event()
         
         # Start background thread immediately if opened
         if self.cap.isOpened():
-            self.cap.grab()
-            self.ret, self.frame = self.cap.retrieve()
+            grabbed = self.cap.grab()
+            if grabbed:
+                self.ret, self.frame = self.cap.retrieve()
             self.thread = threading.Thread(target=self.update, args=())
             self.thread.daemon = True
             self.thread.start()
@@ -61,27 +63,29 @@ class ThreadedIPCamera:
     def update(self):
         while self.running:
             if self.cap.isOpened():
-                # grab() instantly pulls the frame from the network socket WITHOUT decoding it.
-                # This takes almost 0ms and keeps the network buffer completely empty.
                 grabbed = self.cap.grab()
-                
-                # Only perform the heavy decoding (retrieve) if the main thread actually needs it
-                if grabbed and self.frame_requested:
-                    self.ret, self.frame = self.cap.retrieve()
-                    self.frame_requested = False
+                if grabbed:
+                    ret, frame = self.cap.retrieve()
+                    if ret:
+                        with self.lock:
+                            self.ret = ret
+                            self.frame = frame
+                        self.new_frame_ready.set()
             else:
                 time.sleep(0.01)
 
     def read(self):
-        # Tell the background thread we are ready for the next decoded frame
-        self.frame_requested = True
-        return self.ret, self.frame
+        self.new_frame_ready.wait(timeout=0.1)
+        self.new_frame_ready.clear()
+        with self.lock:
+            return self.ret, self.frame
         
     def isOpened(self):
         return self.cap.isOpened() if self.cap else False
 
     def release(self):
         self.running = False
+        self.new_frame_ready.set()
         if hasattr(self, 'thread') and self.thread.is_alive():
             self.thread.join(timeout=1.0)
         if self.cap:

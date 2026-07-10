@@ -19,7 +19,8 @@ class VideoCamera:
         
         self.frame = None
         self.ret = False
-        self.frame_requested = True
+        self.lock = threading.Lock()
+        self.new_frame_ready = threading.Event()
         self.thread = None
         
         self.connect()
@@ -45,9 +46,9 @@ class VideoCamera:
         
         if self.video.isOpened():
             print(f"[Camera] Connected to {self.source}")
-            # Start background thread for zero-latency reading
-            self.video.grab()
-            self.ret, self.frame = self.video.retrieve()
+            grabbed = self.video.grab()
+            if grabbed:
+                self.ret, self.frame = self.video.retrieve()
             
             self.is_running = True
             self.thread = threading.Thread(target=self.update, args=())
@@ -55,16 +56,18 @@ class VideoCamera:
             self.thread.start()
         else:
             print(f"[Camera] Failed to connect to {self.source}")
-            # Don't fallback automatically to webcam to ensure user knows their IP failed
-            # self.video = None (keeps the failed object which isOpened() == False)
 
     def update(self):
         while self.is_running:
             if self.video and self.video.isOpened():
                 grabbed = self.video.grab()
-                if grabbed and self.frame_requested:
-                    self.ret, self.frame = self.video.retrieve()
-                    self.frame_requested = False
+                if grabbed:
+                    ret, frame = self.video.retrieve()
+                    if ret:
+                        with self.lock:
+                            self.ret = ret
+                            self.frame = frame
+                        self.new_frame_ready.set()
             else:
                 time.sleep(0.01)
 
@@ -78,6 +81,7 @@ class VideoCamera:
 
     def stop(self):
         self.is_running = False
+        self.new_frame_ready.set()
         if self.thread and self.thread.is_alive():
             self.thread.join(timeout=1.0)
         if self.video and self.video.isOpened():
@@ -89,16 +93,15 @@ class VideoCamera:
 
     def get_frame(self):
         if not self.is_running or self.video is None or not self.video.isOpened():
-             # Return black frame if stopped
              return np.zeros((480, 640, 3), dtype=np.uint8)
 
-        self.frame_requested = True
+        self.new_frame_ready.wait(timeout=0.1)
+        self.new_frame_ready.clear()
         
-        # Wait very briefly if the frame isn't ready, but usually we just return the latest
-        if not self.ret or self.frame is None:
-            return np.zeros((480, 640, 3), dtype=np.uint8)
-            
-        return self.frame.copy()
+        with self.lock:
+            if not self.ret or self.frame is None:
+                return np.zeros((480, 640, 3), dtype=np.uint8)
+            return self.frame.copy()
 
     def get_jpg_bytes(self, frame):
         """Convert a frame to jpg bytes for streaming"""

@@ -5,6 +5,8 @@ import base64
 import numpy as np
 import time
 import threading
+import json
+import paho.mqtt.client as mqtt
 from flask import Flask, render_template_string, request, jsonify, Response
 
 # Add root folder to path to import detector safely
@@ -391,6 +393,24 @@ HTML_TEMPLATE = """
                 <button class="btn btn-secondary" id="startIpCamBtn">Connect IP Camera</button>
                 <button class="btn btn-danger" id="stopIpCamBtn" style="display: none;">Disconnect IP Camera</button>
             </div>
+
+            <div class="control-group">
+                <h3>Anomaly Detection Test</h3>
+                <div style="display: flex; gap: 0.5rem; flex-direction: column;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" id="tempInput" placeholder="Temp (°C)" value="25"
+                            style="width: 50%; padding: 0.75rem; border-radius: 12px; border: 1px solid var(--glass-border);
+                            background: rgba(255,255,255,0.05); color: var(--text); font-family: 'Outfit', sans-serif; outline: none;">
+                        <input type="number" id="humInput" placeholder="Hum (%)" value="45"
+                            style="width: 50%; padding: 0.75rem; border-radius: 12px; border: 1px solid var(--glass-border);
+                            background: rgba(255,255,255,0.05); color: var(--text); font-family: 'Outfit', sans-serif; outline: none;">
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text); cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="gasAlarmInput"> Gas Alarm Active
+                    </label>
+                    <button class="btn btn-secondary" id="sendAnomalyBtn" style="margin-top: 0.5rem;">Send Fake Data</button>
+                </div>
+            </div>
             
             <div class="control-group" id="statsPanel" style="display: none;">
                 <h3>Detection Stats</h3>
@@ -440,6 +460,11 @@ HTML_TEMPLATE = """
         const ipCamInput = document.getElementById('ipCamInput');
         const startIpCamBtn = document.getElementById('startIpCamBtn');
         const stopIpCamBtn = document.getElementById('stopIpCamBtn');
+
+        const tempInput = document.getElementById('tempInput');
+        const humInput = document.getElementById('humInput');
+        const gasAlarmInput = document.getElementById('gasAlarmInput');
+        const sendAnomalyBtn = document.getElementById('sendAnomalyBtn');
 
         // Image upload handler
         imageInput.addEventListener('change', async (e) => {
@@ -544,6 +569,37 @@ HTML_TEMPLATE = """
             statsPanel.style.display = 'none';
             await fetch('/api/stop_ipcam', { method: 'POST' });
         }
+
+        // Anomaly Detection handlers
+        sendAnomalyBtn.addEventListener('click', async () => {
+            const temp = parseFloat(tempInput.value) || 25.0;
+            const hum = parseFloat(humInput.value) || 45.0;
+            const gas = gasAlarmInput.checked;
+
+            const originalText = sendAnomalyBtn.innerText;
+            sendAnomalyBtn.innerText = 'Sending...';
+
+            try {
+                const res = await fetch('/api/test_anomaly', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ temperature: temp, humidity: hum, gas_alarm: gas })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    sendAnomalyBtn.innerText = 'Sent!';
+                    setTimeout(() => sendAnomalyBtn.innerText = originalText, 2000);
+                } else {
+                    alert('Failed to send: ' + data.error);
+                    sendAnomalyBtn.innerText = originalText;
+                }
+            } catch (err) {
+                console.error('Anomaly test error:', err);
+                alert('Error sending fake data.');
+                sendAnomalyBtn.innerText = originalText;
+            }
+        });
 
         let pollInterval;
         function startStatsPolling() {
@@ -693,6 +749,37 @@ def ipcam_feed():
 @app.route('/api/stats')
 def get_stats():
     return jsonify(latest_webcam_stats)
+
+@app.route('/api/test_anomaly', methods=['POST'])
+def test_anomaly():
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"})
+        
+    import ssl
+    import paho.mqtt.publish as publish
+    try:
+        auth = {'username': "iotuser", 'password': "12345678Me"}
+        tls_dict = {'tls_version': ssl.PROTOCOL_TLS_CLIENT}
+        
+        payload = json.dumps({
+            "temperature": data.get("temperature", 25.0),
+            "humidity": data.get("humidity", 45.0),
+            "gas_alarm": data.get("gas_alarm", False)
+        })
+        
+        publish.single(
+            "factory/sensor_data",
+            payload=payload,
+            hostname="158d9042fc2542248a400b91e6b8c138.s1.eu.hivemq.cloud",
+            port=8883,
+            auth=auth,
+            tls=tls_dict,
+            client_id="test_ui_publisher"
+        )
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/')
 def index():

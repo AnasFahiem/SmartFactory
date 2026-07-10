@@ -46,7 +46,7 @@ def send_email_alert(alert_message):
         
     try:
         msg = MIMEMultipart()
-        msg['From'] = EMAIL_SENDER
+        msg['From'] = f"Anomaly Detection <{EMAIL_SENDER}>"
         msg['To'] = EMAIL_RECEIVER
         msg['Subject'] = "🚨 [URGENT] Factory AI Anomaly Alert"
         
@@ -151,7 +151,8 @@ if __name__ == "__main__":
     # Start the dummy web server in a background thread
     threading.Thread(target=run_dummy_server, daemon=True).start()
     
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="AI_Monitor_Script")
+    import uuid
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"AI_Monitor_Script_Local_{uuid.uuid4().hex[:8]}")
     client.username_pw_set(MQTT_USER, MQTT_PASS)
     
     # HiveMQ Cloud requires TLS

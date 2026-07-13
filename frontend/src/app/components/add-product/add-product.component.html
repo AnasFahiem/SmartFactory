@@ -38,6 +38,9 @@
         <span class="success-icon">✅</span>
         {{ successMessage }}
       </div>
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
     </form>
   </div>
 </div>

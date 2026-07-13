@@ -18,13 +18,12 @@ namespace IoTBackend.Attributes
                 return;
 
             var authHeader = context.HttpContext.Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            if (!SessionManager.TryGetBearerToken(authHeader, out var token))
             {
                 context.Result = new UnauthorizedObjectResult(new { message = "Unauthorized. Missing or invalid Authorization header." });
                 return;
             }
 
-            var token = authHeader.Substring("Bearer ".Length).Trim();
             if (!SessionManager.IsValidToken(token))
             {
                 context.Result = new UnauthorizedObjectResult(new { message = "Unauthorized. Token is invalid or expired." });
@@ -35,7 +34,7 @@ namespace IoTBackend.Attributes
             {
                 var userRole = SessionManager.GetRole(token);
                 var allowedRoles = Roles.Split(',').Select(r => r.Trim()).ToList();
-                if (userRole == null || !allowedRoles.Contains(userRole))
+                if (userRole == null || !allowedRoles.Contains(userRole, StringComparer.OrdinalIgnoreCase))
                 {
                     context.Result = new ObjectResult(new { message = "Forbidden. Insufficient permissions." }) { StatusCode = 403 };
                     return;

@@ -18,12 +18,6 @@ def train_model():
         print("    If you have an NVIDIA GPU, reinstall PyTorch with CUDA support.")
         device = "cpu"
 
-    # ─── MODEL ────────────────────────────────────────────────────────────────
-    # Optimized for RTX 3070 Ti (8GB VRAM)
-    # yolo11l.pt = Large model — high accuracy, comfortably fits in 8GB VRAM
-    # ─────────────────────────────────────────────────────────────────────────
-    # If using RTX 2050 (4GB), change to: model=yolo11m.pt, batch=4, imgsz=640
-    # ─────────────────────────────────────────────────────────────────────────
     model = YOLO("yolo11m.pt")
 
     # ─── DATASET PATH ─────────────────────────────────────────────────────────
@@ -42,17 +36,6 @@ def train_model():
     print("Starting training on the SH17 dataset (17 PPE classes, 8,099 images)...")
     print("─" * 60)
 
-    # Set environment variable to prevent memory fragmentation on Windows 8GB GPUs (commented out to prevent CUDA hangs)
-    # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
-    # ─── TRAIN ────────────────────────────────────────────────────────────────
-    # Corrected Settings for RTX 3070 Ti (8GB VRAM):
-    #   - imgsz=800  : A perfect sweet spot. 1024 forced the batch size too low.
-    #   - batch=4    : Set to 4 to prevent VRAM paging/swapping with other open Windows apps.
-    #   - optimizer='auto' : Defaults back to SGD with Momentum (more stable than AdamW for YOLO)
-    #   - mixup/copy_paste : Enabled at soft rates (0.05) to help generalize without underfitting
-    #   - cos_lr=True : Enable cosine learning rate decay
-    #   - cls=1.0 : Increased classification loss weight to address class imbalance & low-recall classes
     results = model.train(
         data=yaml_path,
         epochs=150,

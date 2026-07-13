@@ -23,7 +23,7 @@ const routes: Routes = [
     { path: 'login', component: LoginComponent },
     { path: 'dashboard', component: SensorDashboardComponent, canActivate: [authGuard] },
     { path: 'stream', component: CameraControlComponent, canActivate: [authGuard], data: { roles: ['Manager', 'Admin'] } },
-    { path: 'add-product', component: AddProductComponent, canActivate: [authGuard] },
+    { path: 'add-product', component: AddProductComponent, canActivate: [authGuard], data: { roles: ['Manager', 'Admin'] } },
     { path: 'add-user', component: AddUserComponent, canActivate: [authGuard], data: { roles: ['Admin'] } },
     { path: 'analytics/:productNumber', component: ProductAnalyticsComponent, canActivate: [authGuard] },
     { path: 'products-list', component: ProductsListComponent, canActivate: [authGuard] },

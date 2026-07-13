@@ -6,5 +6,6 @@ namespace IoTBackend.Models
         public string Username { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public string Role { get; set; } = "User"; // Default Role
+        public string? Email { get; set; }
     }
 }

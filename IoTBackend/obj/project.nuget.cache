@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "zTYTwCUNhNs=",
+  "dgSpecHash": "jb/N428WgwI=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-AI-model\\SmartFactory-AI-model\\IoTBackend\\IoTBackend.csproj",
+  "projectFilePath": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-after-audit\\SmartFactory-after-audit\\IoTBackend\\IoTBackend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Mikhail Gerges\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Mikhail Gerges\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\6.0.0\\microsoft.bcl.asyncinterfaces.6.0.0.nupkg.sha512",

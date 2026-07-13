@@ -8,6 +8,10 @@ import requests
 import base64
 from flask_cors import CORS
 import os
+from dotenv import load_dotenv
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+load_dotenv(os.path.join(project_root, ".env"))
 
 app = Flask(__name__)
 CORS(app)
@@ -17,10 +21,9 @@ CORS(app)
 # Use localhost for local testing via start_app.bat, or the Azure URL for cloud deployment.
 # Local: http://localhost:5005/api/camera/upload
 # Cloud: https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload
-API_URL = os.getenv("API_URL", "https://smartest-factory-dcg4awhecvahcmgq.francecentral-01.azurewebsites.net/api/camera/upload")
-# TODO: SECURITY RISK - Move this to an environment variable (.env) before production
-MY_SECRET = "YourSuperSecretKey123"
-CAMERA_SOURCE = "rtsp://adminanas:admin123@10.188.242.214:554/stream2" # Use stream2 for fastest performance with Mercusys/Tapo cameras
+API_URL = os.getenv("API_URL")
+MY_SECRET = os.getenv("CAMERA_SECRET")
+CAMERA_SOURCE = os.getenv("CAMERA_SOURCE")
 
 # Global stats
 current_stats = {"total_people": 0, "violations": 0}

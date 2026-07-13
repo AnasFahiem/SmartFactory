@@ -6,21 +6,33 @@ namespace IoTBackend.Data
 {
     public static class DbSeeder
     {
-        public static async Task SeedUsersAsync(AppDbContext context)
+        public static async Task SeedUsersAsync(AppDbContext context, IConfiguration configuration)
         {
-            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "admin");
-            if (adminUser == null)
+            var adminUsername = configuration["DefaultAdmin:Username"];
+            var adminPassword = configuration["DefaultAdmin:Password"];
+
+            if (string.IsNullOrWhiteSpace(adminUsername) || string.IsNullOrWhiteSpace(adminPassword))
             {
-                var newAdmin = new User
-                {
-                    Username = "admin",
-                    PasswordHash = PasswordHasher.HashPassword("admin123"),
-                    Role = "Admin"
-                };
-                context.Users.Add(newAdmin);
-                await context.SaveChangesAsync();
-                Console.WriteLine("✅ Default admin user created successfully (Username: admin, Password: admin123).");
+                Console.WriteLine("Default admin seed skipped. Configure DefaultAdmin:Username and DefaultAdmin:Password to seed one.");
+                return;
             }
+
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Username == adminUsername);
+            if (adminUser != null)
+            {
+                return;
+            }
+
+            var newAdmin = new User
+            {
+                Username = adminUsername,
+                PasswordHash = PasswordHasher.HashPassword(adminPassword),
+                Role = "Admin"
+            };
+
+            context.Users.Add(newAdmin);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Default admin user created successfully (Username: {adminUsername}).");
         }
     }
 }

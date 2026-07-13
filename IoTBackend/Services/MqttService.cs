@@ -40,7 +40,7 @@ public class MqttService : BackgroundService
         {
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic("factory/commands")
-                .WithPayload("GET_WEIGHT") 
+                .WithPayload("GET_WEIGHT")
                 .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
                 .Build();
 
@@ -77,7 +77,7 @@ public class MqttService : BackgroundService
                     if (!_mqttClient.IsConnected)
                     {
                         await _mqttClient.ConnectAsync(options, stoppingToken);
-                        await _mqttClient.SubscribeAsync("factory/#"); 
+                        await _mqttClient.SubscribeAsync("factory/#");
                         _logger.LogInformation("MQTT Connected and Subscribed.");
                     }
                 }
@@ -85,7 +85,7 @@ public class MqttService : BackgroundService
                 {
                     _logger.LogError($"MQTT Connection failed: {ex.Message}");
                 }
-                await Task.Delay(5000, stoppingToken); 
+                await Task.Delay(5000, stoppingToken);
             }
         }, stoppingToken);
 
@@ -116,7 +116,7 @@ public class MqttService : BackgroundService
             if (root.TryGetProperty("weight", out var weight))
             {
                 // Stop the 1-second retry loop
-                _weightRequestCts?.Cancel(); 
+                _weightRequestCts?.Cancel();
                 _logger.LogInformation("Weight received! Stopped sending requests.");
 
                 double actualWeight = weight.GetDouble();
@@ -144,7 +144,7 @@ public class MqttService : BackgroundService
                                 decimal idealWeight = product.Weight.Value;
                                 decimal tenPercent = idealWeight * 0.10m;
                                 bool isWithin10Percent = Math.Abs((decimal)actualWeight - idealWeight) <= tenPercent;
-                                
+
                                 string commandPayload = isWithin10Percent ? "true" : "false";
                                 var msg = new MqttApplicationMessageBuilder()
                                     .WithTopic("factory/commands")
@@ -167,15 +167,15 @@ public class MqttService : BackgroundService
             {
                 string qrValue = qr.GetString();
                 _lastReceivedQr = qrValue;
-                
+
                 await _hubContext.Clients.All.SendAsync("ReceiveProductNumberUpdate", qrValue);
-                
+
                 _logger.LogInformation($"QR Code received: {qrValue}. Starting 1-second weight request loop...");
 
                 // Cancel any old loop just in case one is still running
                 _weightRequestCts?.Cancel();
                 _weightRequestCts = new CancellationTokenSource();
-                
+
                 var token = _weightRequestCts.Token;
 
                 // Start a background loop that fires every 1 second
@@ -201,7 +201,7 @@ public class MqttService : BackgroundService
 
             await _hubContext.Clients.All.SendAsync("ReceiveStatsUpdate", new
             {
-                total_people = 0, 
+                total_people = 0,
                 violations = 0
             });
 

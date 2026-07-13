@@ -27,10 +27,7 @@ export class ProductsListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.getCurrentUser();
-    if (user && (user.role === 'Admin' || user.role === 'Manager')) {
-      this.canEdit = true;
-    }
+    this.canEdit = this.authService.hasAnyRole(['Admin', 'Manager']);
     this.loadProducts();
   }
 
@@ -69,8 +66,26 @@ export class ProductsListComponent implements OnInit {
   saveEdit(event: Event): void {
     event.stopPropagation();
     if (!this.editingProduct) return;
+
+    const productNumber = String(this.editingProduct.productNumber || '').trim();
+    const weight = this.editingProduct.weight;
+    if (!productNumber) {
+      alert('Product code is required.');
+      return;
+    }
+
+    if (weight !== null && weight !== undefined && Number(weight) < 0) {
+      alert('Weight cannot be negative.');
+      return;
+    }
+
+    const payload = {
+      ...this.editingProduct,
+      productNumber,
+      weight: weight === null || weight === undefined || weight === '' ? null : Number(weight)
+    };
     
-    this.sensorService.updateProduct(this.editingProduct.id, this.editingProduct).subscribe({
+    this.sensorService.updateProduct(this.editingProduct.id, payload).subscribe({
       next: () => {
         this.editingProduct = null;
         this.loadProducts();

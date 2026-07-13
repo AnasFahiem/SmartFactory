@@ -12,5 +12,14 @@ namespace IoTBackend.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductScan> ProductScans { get; set; }
         public DbSet<User> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(product => product.ProductNumber)
+                .IsUnique();
+        }
     }
 }

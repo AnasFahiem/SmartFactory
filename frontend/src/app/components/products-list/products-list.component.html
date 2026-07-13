@@ -61,7 +61,7 @@
       <div class="empty-icon">📭</div>
       <h3>No Products Found</h3>
       <p>There are currently no products registered in the database.</p>
-      <button class="action-btn" routerLink="/add-product">Add a Product</button>
+      <button *ngIf="canEdit" class="action-btn" routerLink="/add-product">Add a Product</button>
     </div>
   </div>
 </div>

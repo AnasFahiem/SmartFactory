@@ -1,6 +1,8 @@
 using IoTBackend.Hubs;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 
 namespace IoTBackend.Controllers
 {
@@ -9,21 +11,42 @@ namespace IoTBackend.Controllers
     public class CameraController : ControllerBase
     {
         private readonly IHubContext<FactoryHub> _hubContext;
+        private readonly string _cameraSecret;
 
         // In a real app, you might store these in a database or a service
         private static bool _isCameraRunning = true;
         private static string _currentSource = "0";
 
-        public CameraController(IHubContext<FactoryHub> hubContext)
+        public CameraController(
+            IHubContext<FactoryHub> hubContext,
+            IConfiguration configuration,
+            IWebHostEnvironment environment)
         {
             _hubContext = hubContext;
+            var configuredSecret = configuration["Camera:SecretKey"];
+            if (string.IsNullOrWhiteSpace(configuredSecret))
+            {
+                configuredSecret = Environment.GetEnvironmentVariable("CAMERA_SECRET");
+            }
+
+            if (string.IsNullOrWhiteSpace(configuredSecret))
+            {
+                if (!environment.IsDevelopment())
+                {
+                    throw new InvalidOperationException("Camera:SecretKey or CAMERA_SECRET must be configured.");
+                }
+
+                configuredSecret = "dev-camera-secret";
+            }
+
+            _cameraSecret = configuredSecret;
         }
 
         // 1. Existing Upload Endpoint (Used by Python/Phone Bridge)
         [HttpPost("upload")]
         public async Task<IActionResult> UploadFrame([FromBody] CameraFrameRequest request)
         {
-            if (request.SecretKey != "YourSuperSecretKey123")
+            if (!string.Equals(request.SecretKey, _cameraSecret, StringComparison.Ordinal))
                 return Unauthorized();
 
             await _hubContext.Clients.All.SendAsync("ReceiveCameraFrame", request.Image);

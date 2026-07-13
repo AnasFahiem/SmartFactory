@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-AI-model\\SmartFactory-AI-model\\IoTBackend\\IoTBackend.csproj": {}
+    "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-after-audit\\SmartFactory-after-audit\\IoTBackend\\IoTBackend.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-AI-model\\SmartFactory-AI-model\\IoTBackend\\IoTBackend.csproj": {
+    "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-after-audit\\SmartFactory-after-audit\\IoTBackend\\IoTBackend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-AI-model\\SmartFactory-AI-model\\IoTBackend\\IoTBackend.csproj",
+        "projectUniqueName": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-after-audit\\SmartFactory-after-audit\\IoTBackend\\IoTBackend.csproj",
         "projectName": "IoTBackend",
-        "projectPath": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-AI-model\\SmartFactory-AI-model\\IoTBackend\\IoTBackend.csproj",
+        "projectPath": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-after-audit\\SmartFactory-after-audit\\IoTBackend\\IoTBackend.csproj",
         "packagesPath": "C:\\Users\\Mikhail Gerges\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-AI-model\\SmartFactory-AI-model\\IoTBackend\\obj\\",
+        "outputPath": "C:\\Users\\Mikhail Gerges\\Desktop\\SmartFactory-after-audit\\SmartFactory-after-audit\\IoTBackend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
